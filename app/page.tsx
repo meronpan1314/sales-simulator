@@ -1,6 +1,5 @@
 'use client';
 
-// 💡 useEffect を追加インポート
 import { useState, useEffect } from 'react';
 import { 
   Insurance, 
@@ -17,19 +16,16 @@ export default function Home() {
       顧客情報
   ========================= */
   const [documentType, setDocumentType] = useState('ご提案内容');
-  // 💡 初期値は一度空文字にしておきます
   const [createdDate, setCreatedDate] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [birthday, setBirthday] = useState('');
 
-  // 💡 画面が読み込まれた時に、システムの現在日付をセットする処理
   useEffect(() => {
     const today = new Date();
     const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // 月を2桁に揃える
-    const dd = String(today.getDate()).padStart(2, '0');    // 日を2桁に揃える
-    
-    setCreatedDate(`${yyyy}-${mm}-${dd}`); // "YYYY-MM-DD" 形式でセット
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    setCreatedDate(`${yyyy}-${mm}-${dd}`);
   }, []);
 
   /* =========================
@@ -43,6 +39,9 @@ export default function Home() {
   const [paymentEndAge, setPaymentEndAge] = useState(65);
   const [monthlyFee, setMonthlyFee] = useState(5000);
   const [shapeType, setShapeType] = useState<'term' | 'triangle' | 'lifetime'>('term');
+
+  // 💡 ドラッグ＆ドロップ管理用の状態
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   /* =========================
       年齢・日付計算ツール
@@ -92,9 +91,12 @@ export default function Home() {
   };
 
   /* =========================
-      保険追加
+      保険の追加・削除・編集アクション
   ========================= */
+  // 1. 保険の追加（上に追加していく形に変更）
   const addInsurance = () => {
+    if (!company) return alert('保険会社を入力してください');
+
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
 
     const newInsurance: Insurance = {
@@ -108,7 +110,11 @@ export default function Home() {
       color: master.color,
       logo: master.logo,
     };
-    setInsurances([...insurances, newInsurance]);
+    
+    // 💡 [新要素, ...既存要素] にすることで、配列の先頭（上）に追加されます
+    setInsurances([newInsurance, ...insurances]);
+    
+    // フォームのリセット
     setCompany('');
     setInsuranceType('');
     setCoverageText('');
@@ -117,11 +123,50 @@ export default function Home() {
     setShapeType('term');
   };
 
+  // 3. 保険の削除アクション
+  const removeInsurance = (id: number) => {
+    setInsurances(insurances.filter(ins => ins.id !== id));
+  };
+
+  // 4. 説明書き（保障内容）のリアルタイム編集アクション
+  const updateCoverageText = (id: number, text: string) => {
+    setInsurances(
+      insurances.map(ins => ins.id === id ? { ...ins, coverageText: text } : ins)
+    );
+  };
+
+  /* =========================
+      2. ドラッグ＆ドロップ用イベントハンドラ
+  ========================= */
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const newInsurances = [...insurances];
+    const draggedItem = newInsurances[draggedIndex];
+    
+    // 元の場所から削除して、新しい場所に差し込む
+    newInsurances.splice(draggedIndex, 1);
+    newInsurances.splice(index, 0, draggedItem);
+    
+    setDraggedIndex(index);
+    setInsurances(newInsurances);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const totalPrice = insurances.reduce((sum, insurance) => sum + insurance.monthlyFee, 0);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900 font-sans">
-      {/* フォーム部分 */}
+    <div className="flex min-h-screen bg-gray-100 text-gray-900 font-sans选择">
+      {/* ========================================================
+          FORM (左側パネル：営業マンの手元操作用)
+      ======================================================== */}
       {showForm && (
         <div className="w-[460px] overflow-y-auto border-r bg-white p-6 shadow-xl shrink-0 z-20 relative">
           <div className="mb-8 flex items-center justify-between">
@@ -134,7 +179,8 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="mb-8 rounded-lg border bg-gray-50 p-5">
+          {/* 顧客情報入力 */}
+          <div className="mb-6 rounded-lg border bg-gray-50 p-5">
             <h3 className="mb-4 text-lg font-bold border-b pb-2">顧客情報</h3>
             <div className="space-y-4">
               <div>
@@ -168,8 +214,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-gray-50 p-5">
-            <h3 className="mb-4 text-lg font-bold border-b pb-2">保険情報</h3>
+          {/* 新規保険情報入力 */}
+          <div className="rounded-lg border bg-gray-50 p-5 mb-6">
+            <h3 className="mb-4 text-lg font-bold border-b pb-2">保険の新規追加</h3>
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-bold text-gray-600">保険会社</label>
@@ -210,13 +257,69 @@ export default function Home() {
                 </select>
               </div>
               <button onClick={addInsurance} className="w-full rounded bg-gray-800 py-3 font-bold text-white hover:bg-black transition-colors">
-                ＋ 保険を追加する
+                ＋ 保険を上に追加する
               </button>
             </div>
           </div>
+
+          {/* 💡 【新設】登録済みの保険一覧エリア（ドラッグ並び替え・編集・削除ホバー） */}
+          <div className="rounded-lg border bg-gray-50 p-5">
+            <h3 className="mb-3 text-lg font-bold border-b pb-2">登録済みの保険 ({insurances.length})</h3>
+            {insurances.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">登録された保険はありません</p>
+            ) : (
+              <div className="space-y-3">
+                {insurances.map((ins, index) => (
+                  <div
+                    key={ins.id}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragEnter={() => handleDragEnter(index)}
+                    onDragEnd={handleDragEnd}
+                    className={`p-3 bg-white border rounded shadow-sm relative group cursor-move transition-all ${
+                      draggedIndex === index ? 'opacity-30 border-blue-400 bg-blue-50' : 'hover:border-gray-400'
+                    }`}
+                  >
+                    {/* ③ 削除ボタン：group-hoverによって、カードにマウスを乗せた時だけ右上に出現 */}
+                    <button
+                      onClick={() => removeInsurance(ins.id)}
+                      className="absolute top-2 right-2 hidden group-hover:flex items-center justify-center w-5 h-5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition-colors"
+                      title="削除"
+                    >
+                      ×
+                    </button>
+
+                    {/* タイトル部分 */}
+                    <div className="flex items-center gap-1.5 mb-2 pr-6 select-none">
+                      <span className="text-sm font-bold text-gray-400">☰</span>
+                      <span className="text-sm font-bold text-gray-700">{CIRCLED_NUMBERS[index]}</span>
+                      <span className="font-bold text-sm truncate max-w-[120px]">{ins.company}</span>
+                      <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 truncate">{ins.insuranceType}</span>
+                    </div>
+
+                    {/* ④ 説明書きのリアルタイム編集テキストエリア */}
+                    <div>
+                      <textarea
+                        value={ins.coverageText}
+                        onChange={(e) => updateCoverageText(ins.id, e.target.value)}
+                        placeholder="保障内容を編集できます"
+                        className="w-full border rounded p-1.5 text-xs h-16 resize-none focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[10px] text-gray-400 text-center pt-1">※カードを上下にドラッグして並び替えができます</p>
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
+      {/* ========================================================
+          OUTPUT (右側：お客様に見せるクリーンな画面)
+      ======================================================== */}
       <div className="flex-1 overflow-auto p-10 bg-gray-200">
         {!showForm && (
           <button onClick={() => setShowForm(true)} className="mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50">
