@@ -1,0 +1,2 @@
+# InsuranceSalesDemo
+保険営業時に使用する概要図をINPUTの情報から作成するアプリ
