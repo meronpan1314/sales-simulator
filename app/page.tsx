@@ -45,6 +45,9 @@ export default function Home() {
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
+  // 💡 【追加】使い方ガイドの表示状態
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   /* =========================
       年齢・日付計算ツール
@@ -219,6 +222,74 @@ export default function Home() {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full overflow-x-hidden bg-gray-100 text-gray-900 font-sans">
       
+      {/* 💡 【追加】使い方ガイド（モーダル表示） */}
+      {isHelpOpen && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity" 
+          onClick={() => setIsHelpOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col" 
+            onClick={e => e.stopPropagation()}
+          >
+            {/* モーダルヘッダー */}
+            <div className="bg-gray-800 p-4 text-white flex justify-between items-center">
+              <h3 className="font-bold text-lg">💡 提案シミュレーターの使い方</h3>
+              <button onClick={() => setIsHelpOpen(false)} className="text-3xl leading-none hover:text-gray-300">&times;</button>
+            </div>
+            
+            {/* モーダルコンテンツ */}
+            <div className="p-6 space-y-6 text-sm overflow-y-auto max-h-[75vh]">
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg">1</div>
+                <div>
+                  <p className="font-bold text-base mb-1">保険の追加</p>
+                  <p className="text-gray-600 leading-relaxed">左側の設定パネルから情報を入力して「追加」を押すと、一番上（新しい順）に追加されます。</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg">2</div>
+                <div>
+                  <p className="font-bold text-base mb-1">順番を変える・削除する</p>
+                  <p className="text-gray-600 leading-relaxed">
+                    <span className="font-semibold">【PC】</span>カードを上下にドラッグ<br/>
+                    <span className="font-semibold">【スマホ】</span>カード内の「▲▼」ボタンをタップ<br/>
+                    ※右上の「×」ボタンから削除も可能です。
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg">3</div>
+                <div>
+                  <p className="font-bold text-base mb-1">保障内容を編集する</p>
+                  <p className="text-gray-600 leading-relaxed">登録済みカードのテキストエリアを書き換えると、図形上の文字もリアルタイムに連動して変わります。改行数に応じて文字サイズも自動調整されます。</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg">4</div>
+                <div>
+                  <p className="font-bold text-base mb-1">PDFで出力する</p>
+                  <p className="text-gray-600 leading-relaxed">「PDFをダウンロード」を押すと、お客様にそのまま渡せるA4横サイズの資料が生成されます。</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* モーダルフッター */}
+            <div className="p-4 border-t bg-gray-50">
+              <button 
+                onClick={() => setIsHelpOpen(false)} 
+                className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold transition-all"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========================================================
           FORM (左側パネル / スマホ時は上部パネル)
       ======================================================== */}
@@ -344,7 +415,6 @@ export default function Home() {
                         draggedIndex === index ? 'opacity-30 border-blue-400 bg-blue-50' : 'hover:border-gray-400'
                       }`}
                     >
-                      {/* 削除ボタン（スマホ時は常に表示、PC時はホバー時のみ） */}
                       <button
                         onClick={() => removeInsurance(ins.id)}
                         className="absolute top-2 right-2 flex lg:hidden group-hover:flex items-center justify-center w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition-colors z-10"
@@ -354,12 +424,10 @@ export default function Home() {
                       </button>
 
                       <div className="flex items-center gap-1.5 mb-2 pr-10 select-none">
-                        {/* スマホ専用の「上へ・下へ」ボタン */}
                         <div className="flex flex-col lg:hidden mr-1">
                           <button onClick={() => moveInsurance(index, 'up')} disabled={index === 0} className="text-[12px] text-gray-500 disabled:opacity-20 leading-none p-1">▲</button>
                           <button onClick={() => moveInsurance(index, 'down')} disabled={index === insurances.length - 1} className="text-[12px] text-gray-500 disabled:opacity-20 leading-none p-1">▼</button>
                         </div>
-                        {/* PC用のドラッグアイコン */}
                         <span className="text-sm font-bold text-gray-400 hidden lg:inline">☰</span>
                         <span className="text-sm font-bold text-gray-700">{numLabel}</span>
                         <span className="font-bold text-sm truncate max-w-[120px]">{ins.company}</span>
@@ -388,12 +456,21 @@ export default function Home() {
       ======================================================== */}
       <div className="flex-1 w-full lg:h-full lg:overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center">
         
-        <div className="w-full max-w-[1000px] flex justify-start">
+        {/* 💡 【追加】ボタンエリアに「？」ガイドボタンを並べて配置 */}
+        <div className="w-full max-w-[1000px] flex justify-start items-center gap-3">
           {!showForm && (
             <button onClick={() => setShowForm(true)} className="mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50">
               ▶ 設定パネルを開く
             </button>
           )}
+          
+          <button 
+            onClick={() => setIsHelpOpen(true)}
+            className="mb-4 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors font-bold text-lg"
+            title="使い方ガイドを見る"
+          >
+            ?
+          </button>
         </div>
 
         <div className="w-full max-w-full overflow-x-auto pb-8">
