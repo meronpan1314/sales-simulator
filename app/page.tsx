@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+// 💡 html2canvasの代わりに html-to-image をインポート
+import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
+
 import { 
   Insurance, 
   COMPANY_MASTER, 
@@ -41,6 +45,7 @@ export default function Home() {
   const [shapeType, setShapeType] = useState<'term' | 'triangle' | 'lifetime'>('term');
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   /* =========================
       年齢・日付計算ツール
@@ -144,6 +149,65 @@ export default function Home() {
 
   const handleDragEnd = () => setDraggedIndex(null);
 
+  /* =========================
+      PDF出力ロジック (html-to-image版)
+  ========================= */
+  const handleDownloadPDF = async () => {
+    const targetElement = document.getElementById('pdf-export-area');
+    if (!targetElement) return;
+
+    setIsGeneratingPDF(true);
+
+    try {
+      // 1. html-to-imageを使って高画質で画像化（エラーに強い）
+      const imgData = await toPng(targetElement, {
+        pixelRatio: 2, // 2倍の解像度で出力
+        backgroundColor: '#ffffff', // 背景を白で固定
+        style: {
+          transform: 'scale(1)', // 縮尺ズレ防止
+          transformOrigin: 'top left'
+        }
+      });
+
+      // 2. A4サイズ（横向き）のPDFを生成
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // 3. 画像の縦横比を計算
+      const imgProps = pdf.getImageProperties(imgData);
+      const ratio = imgProps.width / imgProps.height;
+      
+      let finalWidth = pdfWidth;
+      let finalHeight = finalWidth / ratio;
+
+      if (finalHeight > pdfHeight) {
+        finalHeight = pdfHeight;
+        finalWidth = finalHeight * ratio;
+      }
+
+      const xOffset = (pdfWidth - finalWidth) / 2;
+      const yOffset = (pdfHeight - finalHeight) / 2;
+
+      // 4. PDFに貼り付けてダウンロード
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+      
+      const fileName = `${customerName || 'お客'}様_${documentType}.pdf`;
+      pdf.save(fileName);
+
+    } catch (error) {
+      console.error('PDF生成に失敗しました', error);
+      alert('PDFの出力に失敗しました。');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   const totalPrice = insurances.reduce((sum, insurance) => sum + insurance.monthlyFee, 0);
 
   return (
@@ -152,9 +216,9 @@ export default function Home() {
           FORM (左側パネル)
       ======================================================== */}
       {showForm && (
-        <div className="w-[460px] overflow-y-auto border-r bg-white p-6 shadow-xl shrink-0 z-20 relative">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">入力フォーム</h2>
+        <div className="w-[460px] overflow-y-auto border-r bg-white p-6 shadow-xl shrink-0 z-20 relative flex flex-col gap-6">
+          <div className="flex items-center justify-between border-b pb-4">
+            <h2 className="text-2xl font-bold">設定パネル</h2>
             <button
               onClick={() => setShowForm(false)}
               className="rounded bg-gray-200 px-3 py-1 text-sm font-semibold hover:bg-gray-300"
@@ -163,7 +227,20 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="mb-6 rounded-lg border bg-gray-50 p-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <p className="text-sm text-blue-800 font-bold mb-3">資料が完成したら出力</p>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className={`w-full py-3 rounded text-white font-bold shadow-md transition-all ${
+                isGeneratingPDF ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isGeneratingPDF ? 'PDFを生成中...' : '📥 PDFをダウンロード'}
+            </button>
+          </div>
+
+          <div className="rounded-lg border bg-gray-50 p-5">
             <h3 className="mb-4 text-lg font-bold border-b pb-2">顧客情報</h3>
             <div className="space-y-4">
               <div>
@@ -195,7 +272,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-gray-50 p-5 mb-6">
+          <div className="rounded-lg border bg-gray-50 p-5">
             <h3 className="mb-4 text-lg font-bold border-b pb-2">保険の新規追加</h3>
             <div className="space-y-4">
               <div>
@@ -293,16 +370,22 @@ export default function Home() {
       )}
 
       {/* ========================================================
-          OUTPUT (右側：お客様に見せる画面)
+          OUTPUT (右側：お客様に見せる画面 ＆ PDF出力対象)
       ======================================================== */}
-      <div className="flex-1 overflow-auto p-10 bg-gray-200">
-        {!showForm && (
-          <button onClick={() => setShowForm(true)} className="mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50">
-            ▶ 入力フォームを開く
-          </button>
-        )}
+      <div className="flex-1 overflow-auto p-10 bg-gray-200 flex flex-col items-center">
+        
+        <div className="w-[1000px] flex justify-start">
+          {!showForm && (
+            <button onClick={() => setShowForm(true)} className="mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50">
+              ▶ 設定パネルを開く
+            </button>
+          )}
+        </div>
 
-        <div className="mx-auto w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative">
+        <div 
+          id="pdf-export-area" 
+          className="w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative"
+        >
           <div className="flex justify-between items-start mb-12">
             <div>
               <p className="text-xl tracking-widest font-bold mb-4">{documentType}</p>
@@ -348,20 +431,16 @@ export default function Home() {
               const reversedNumberIndex = insurances.length - 1 - index;
               const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
 
-              /* 💡 文字の大きさと配置の最適化ロジック */
               const linesCount = insurance.coverageText ? insurance.coverageText.split('\n').length : 1;
               let textStyleClass = '';
-              // 行数に合わせて文字の大きさと行間を調整
               if (linesCount === 1) textStyleClass = 'text-lg font-bold'; 
               else if (linesCount === 2) textStyleClass = 'text-base font-bold leading-snug';
               else if (linesCount === 3) textStyleClass = 'text-sm font-bold leading-tight';
               else textStyleClass = 'text-xs font-bold leading-tight';
 
               const isTriangle = insurance.shapeType === 'triangle';
-              // 三角の時は斜辺を避けるため左下（bottom-3）に配置、それ以外は上下中央配置
               const positionClass = isTriangle ? 'bottom-3 left-5' : 'top-1/2 -translate-y-1/2 left-5';
               
-              // 文字の折り返し最大幅を設定（三角の時は右端ギリギリまで行かないよう幅を約65%に制限）
               let maxTextWidth;
               if (insurance.shapeType === 'lifetime') {
                 maxTextWidth = width - 30;
@@ -385,8 +464,6 @@ export default function Home() {
                   </div>
 
                   <div className="flex-1 relative h-[100px]">
-                    
-                    {/* 💡 改善されたテキストエリア */}
                     <div 
                       className={`absolute z-10 whitespace-pre-wrap break-all pointer-events-none text-gray-800 ${positionClass} ${textStyleClass}`}
                       style={{ maxWidth: maxTextWidth, textShadow: '0px 0px 4px rgba(255,255,255,0.8)' }}
