@@ -131,8 +131,19 @@ export default function Home() {
     );
   };
 
+  const moveInsurance = (index: number, direction: 'up' | 'down') => {
+    const newInsurances = [...insurances];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newInsurances.length) return;
+    
+    const temp = newInsurances[index];
+    newInsurances[index] = newInsurances[targetIndex];
+    newInsurances[targetIndex] = temp;
+    setInsurances(newInsurances);
+  };
+
   /* =========================
-      ドラッグ＆ドロップ用イベントハンドラ
+      ドラッグ＆ドロップ用イベントハンドラ（PC用）
   ========================= */
   const handleDragStart = (index: number) => setDraggedIndex(index);
 
@@ -206,13 +217,13 @@ export default function Home() {
   const totalPrice = insurances.reduce((sum, insurance) => sum + insurance.monthlyFee, 0);
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gray-100 text-gray-900 font-sans">
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full overflow-x-hidden bg-gray-100 text-gray-900 font-sans">
       
       {/* ========================================================
           FORM (左側パネル / スマホ時は上部パネル)
       ======================================================== */}
       {showForm && (
-        <div className="w-full lg:w-[460px] h-auto lg:h-full overflow-y-auto border-b lg:border-r bg-white p-4 lg:p-6 shadow-xl shrink-0 z-20 relative flex flex-col gap-6">
+        <div className="w-full lg:w-[460px] lg:h-full lg:overflow-y-auto border-b lg:border-r bg-white p-4 lg:p-6 shadow-xl lg:shrink-0 z-20 relative flex flex-col gap-6">
           <div className="flex items-center justify-between border-b pb-4">
             <h2 className="text-xl lg:text-2xl font-bold">設定パネル</h2>
             <button
@@ -333,15 +344,23 @@ export default function Home() {
                         draggedIndex === index ? 'opacity-30 border-blue-400 bg-blue-50' : 'hover:border-gray-400'
                       }`}
                     >
+                      {/* 削除ボタン（スマホ時は常に表示、PC時はホバー時のみ） */}
                       <button
                         onClick={() => removeInsurance(ins.id)}
-                        className="absolute top-2 right-2 flex lg:hidden group-hover:flex items-center justify-center w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition-colors"
+                        className="absolute top-2 right-2 flex lg:hidden group-hover:flex items-center justify-center w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition-colors z-10"
                         title="削除"
                       >
                         ×
                       </button>
-                      <div className="flex items-center gap-1.5 mb-2 pr-8 select-none">
-                        <span className="text-sm font-bold text-gray-400">☰</span>
+
+                      <div className="flex items-center gap-1.5 mb-2 pr-10 select-none">
+                        {/* スマホ専用の「上へ・下へ」ボタン */}
+                        <div className="flex flex-col lg:hidden mr-1">
+                          <button onClick={() => moveInsurance(index, 'up')} disabled={index === 0} className="text-[12px] text-gray-500 disabled:opacity-20 leading-none p-1">▲</button>
+                          <button onClick={() => moveInsurance(index, 'down')} disabled={index === insurances.length - 1} className="text-[12px] text-gray-500 disabled:opacity-20 leading-none p-1">▼</button>
+                        </div>
+                        {/* PC用のドラッグアイコン */}
+                        <span className="text-sm font-bold text-gray-400 hidden lg:inline">☰</span>
                         <span className="text-sm font-bold text-gray-700">{numLabel}</span>
                         <span className="font-bold text-sm truncate max-w-[120px]">{ins.company}</span>
                         <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 truncate">{ins.insuranceType}</span>
@@ -357,8 +376,6 @@ export default function Home() {
                     </div>
                   );
                 })}
-                <p className="text-[10px] text-gray-400 text-center pt-1">※カードを上下にドラッグして並び替えができます</p>
-                <p className="text-[10px] text-red-400 text-center">※スマホブラウザではドラッグがうまく動作しない場合があります</p>
               </div>
             )}
           </div>
@@ -369,7 +386,7 @@ export default function Home() {
       {/* ========================================================
           OUTPUT (右側・スマホ時は下部：お客様に見せる画面)
       ======================================================== */}
-      <div className="flex-1 overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center">
+      <div className="flex-1 w-full lg:h-full lg:overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center">
         
         <div className="w-full max-w-[1000px] flex justify-start">
           {!showForm && (
@@ -379,7 +396,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="w-full max-w-[1000px] overflow-x-auto pb-8">
+        <div className="w-full max-w-full overflow-x-auto pb-8">
           <div 
             id="pdf-export-area" 
             className="w-[1000px] min-w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative mx-auto"
