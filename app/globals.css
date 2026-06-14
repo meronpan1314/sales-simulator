@@ -176,12 +176,40 @@ body {
     @apply text-sm text-gray-600 font-bold mb-1 block;
   }
 
+  .age-summary-row {
+    @apply flex items-baseline justify-center gap-2;
+  }
+
   .age-summary-label {
-    @apply text-sm text-gray-600 mr-2;
+    @apply text-sm text-gray-600;
   }
 
   .age-summary-value {
     @apply text-2xl font-bold text-blue-800;
+  }
+
+  .reference-age-field {
+    @apply mt-3 flex items-center justify-between gap-3 border-t border-blue-200 pt-3 text-left;
+  }
+
+  .reference-age-label {
+    @apply text-sm font-bold text-gray-700;
+  }
+
+  .reference-age-control {
+    @apply flex min-w-0 items-center gap-1;
+  }
+
+  .reference-age-input {
+    @apply w-24 rounded border border-blue-200 bg-white px-3 py-2 text-right text-base font-bold text-blue-900 focus:border-blue-500 focus:outline-none;
+  }
+
+  .reference-age-unit {
+    @apply shrink-0 text-sm font-bold text-gray-700;
+  }
+
+  .reference-age-result {
+    @apply mt-2 rounded bg-white/70 px-3 py-2 text-sm font-bold text-blue-900;
   }
 
   /* ==== ボタン ==== */

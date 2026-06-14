@@ -14,6 +14,20 @@ export const calculateAge = (birthday: string) => {
   return age;
 };
 
+export const resolveReferenceAge = (birthday: string, referenceAge: string) => {
+  const currentAge = calculateAge(birthday);
+  const trimmedAge = referenceAge.trim();
+
+  if (!trimmedAge) return currentAge;
+
+  const selectedAge = Number(trimmedAge);
+  if (!Number.isFinite(selectedAge) || !Number.isInteger(selectedAge) || selectedAge < 0) {
+    return currentAge;
+  }
+
+  return selectedAge;
+};
+
 // 2. 和暦変換
 export const toJapaneseCalendar = (dateString: string) => {
   if (!dateString) return '';

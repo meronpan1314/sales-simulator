@@ -20,7 +20,8 @@ export default function Home() {
     documentType: 'ご提案内容',
     createdDate: getTodayDateValue(),
     customerName: '',
-    birthday: ''
+    birthday: '',
+    referenceAge: '',
   });
   const [insurances, setInsurances] = useState<Insurance[]>([]);
   

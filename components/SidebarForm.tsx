@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react';
 import { Insurance, COMPANY_MASTER, INSURANCE_TYPES, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
-import { calculateAge, toJapaneseCalendar } from '../utils/helpers';
+import { calculateAge, resolveReferenceAge, toJapaneseCalendar } from '../utils/helpers';
 
 export type CustomerInfo = {
   documentType: string;
   createdDate: string;
   customerName: string;
   birthday: string;
+  referenceAge: string;
 };
 
 type Props = {
@@ -97,6 +98,9 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
   const [openDatePicker, setOpenDatePicker] = useState<DateFieldKey | null>(null);
 
   const currentAge = calculateAge(customerInfo.birthday);
+  const referenceAge = resolveReferenceAge(customerInfo.birthday, customerInfo.referenceAge);
+  const currentAgeLabel = typeof currentAge === 'number' ? currentAge : '--';
+  const referenceAgeLabel = typeof referenceAge === 'number' ? referenceAge : '--';
   const currentYear = getTodayParts().year;
 
   const updateCustomerInfo = (field: keyof CustomerInfo, value: string) => {
@@ -108,6 +112,21 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
   };
   const handleMonthlyFeeChange = (value: string) => {
     setMonthlyFee(value === '' ? '' : Number(value));
+  };
+  const handleReferenceAgeChange = (value: string) => {
+    updateCustomerInfo('referenceAge', value);
+  };
+  const normalizeReferenceAgeInput = () => {
+    const trimmedAge = customerInfo.referenceAge.trim();
+    if (!trimmedAge) return;
+
+    const selectedAge = Number(trimmedAge);
+    if (!Number.isFinite(selectedAge) || !Number.isInteger(selectedAge) || selectedAge < 0) {
+      updateCustomerInfo('referenceAge', '');
+      return;
+    }
+
+    updateCustomerInfo('referenceAge', String(selectedAge));
   };
 
   const addInsurance = () => {
@@ -345,8 +364,28 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
           {renderDateField('birthday', '生年月日', 1900, currentYear, '生年月日を選択')}
           <div className="age-summary">
             {customerInfo.birthday && <span className="age-summary-calendar">{toJapaneseCalendar(customerInfo.birthday)}</span>}
-            <span className="age-summary-label">現在の年齢:</span>
-            <span className="age-summary-value">{currentAge || '--'} 歳</span>
+            <div className="age-summary-row">
+              <span className="age-summary-label">現在の年齢</span>
+              <span className="age-summary-value">{currentAgeLabel} 歳</span>
+            </div>
+            <label className="reference-age-field">
+              <span className="reference-age-label">シミュレーション時点</span>
+              <span className="reference-age-control">
+                <input
+                  type="number"
+                  min="0"
+                  value={customerInfo.referenceAge}
+                  onChange={e => handleReferenceAgeChange(e.target.value)}
+                  onBlur={normalizeReferenceAgeInput}
+                  placeholder={typeof currentAge === 'number' ? String(currentAge) : '年齢'}
+                  className="reference-age-input"
+                />
+                <span className="reference-age-unit">歳</span>
+              </span>
+            </label>
+            <div className="reference-age-result">
+              払込開始: {referenceAgeLabel} 歳時点
+            </div>
           </div>
         </div>
       </div>

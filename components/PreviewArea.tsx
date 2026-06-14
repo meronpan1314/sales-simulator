@@ -1,13 +1,14 @@
 'use client';
 
 import { Insurance, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
-import { calculateAge, toJapaneseCalendar, formatCreatedDate } from '../utils/helpers';
+import { resolveReferenceAge, toJapaneseCalendar, formatCreatedDate } from '../utils/helpers';
 
 type CustomerInfo = {
   documentType: string;
   createdDate: string;
   customerName: string;
   birthday: string;
+  referenceAge: string;
 };
 
 type Props = {
@@ -36,19 +37,21 @@ const getCoverageTextSizes = (text: string, sizes: number[] = []) => {
 };
 
 export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customerInfo, insurances }: Props) {
-  const currentAge = calculateAge(customerInfo.birthday);
+  const referenceAge = resolveReferenceAge(customerInfo.birthday, customerInfo.referenceAge);
+  const referenceAgeLabel = typeof referenceAge === 'number' ? referenceAge : '〇';
+  const hasSelectedReferenceAge = customerInfo.referenceAge.trim() !== '';
   const totalPrice = insurances.reduce((sum, ins) => sum + ins.monthlyFee, 0);
   const width = 600;
   const paymentAxisWidth = width - 150;
-  const currentAgeNumber = typeof currentAge === 'number' ? currentAge : null;
+  const referenceAgeNumber = typeof referenceAge === 'number' ? referenceAge : null;
   const maxPaymentEndAge = insurances
     .filter(ins => ins.shapeType !== 'lifetime')
-    .reduce((maxAge, ins) => Math.max(maxAge, ins.paymentEndAge), currentAgeNumber ?? 0);
+    .reduce((maxAge, ins) => Math.max(maxAge, ins.paymentEndAge), referenceAgeNumber ?? 0);
 
   const ageToX = (age: number) => {
-    if (currentAgeNumber === null) return 0;
-    const endAge = Math.max(maxPaymentEndAge, currentAgeNumber + 1);
-    const mapped = ((age - currentAgeNumber) / (endAge - currentAgeNumber)) * paymentAxisWidth;
+    if (referenceAgeNumber === null) return 0;
+    const endAge = Math.max(maxPaymentEndAge, referenceAgeNumber + 1);
+    const mapped = ((age - referenceAgeNumber) / (endAge - referenceAgeNumber)) * paymentAxisWidth;
     return Math.max(0, Math.min(mapped, paymentAxisWidth));
   };
 
@@ -80,7 +83,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
               <h1 className="customer-heading">
                 {customerInfo.customerName || '     '} 様
                 <span className="customer-age">
-                  〈 {toJapaneseCalendar(customerInfo.birthday)}{customerInfo.birthday ? ' ' : ''}{currentAge || '〇'}歳 〉
+                  〈 {toJapaneseCalendar(customerInfo.birthday)}{customerInfo.birthday ? ' ' : ''}{referenceAgeLabel}歳{hasSelectedReferenceAge ? '時点' : ''} 〉
                 </span>
               </h1>
               <p className="created-date">{formatCreatedDate(customerInfo.createdDate)} 作成</p>
@@ -190,7 +193,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
               <div className="age-axis-label-spacer" />
               <div className="age-axis-track">
                 <div className="age-axis-point" style={{ left: 0 }}>
-                  {currentAge || '--'}歳
+                  {typeof referenceAge === 'number' ? referenceAge : '--'}歳
                 </div>
                 {Array.from(new Set(insurances.filter(ins => ins.shapeType !== 'lifetime').map(ins => ins.paymentEndAge))).map(age => (
                   <div key={age} className="age-axis-point" style={{ left: ageToX(age) }}>
