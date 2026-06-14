@@ -26,13 +26,16 @@ body {
 }
 
 @layer components {
+
   /* ==== ページレイアウト ==== */
   .root-html {
     @apply h-full antialiased;
   }
+
   .root-body {
     @apply min-h-full flex flex-col;
   }
+
   .app-shell {
     @apply flex flex-col lg:flex-row min-h-screen lg:h-screen w-screen max-w-[100vw] bg-gray-100 text-gray-900 overflow-hidden;
   }
@@ -41,27 +44,35 @@ body {
   .sidebar-panel {
     @apply w-full lg:w-[460px] lg:h-full lg:overflow-y-auto border-b lg:border-r bg-white p-4 lg:p-6 shadow-xl lg:shrink-0 z-20 relative flex flex-col gap-6;
   }
+
   .sidebar-header {
     @apply flex items-center justify-between border-b pb-4;
   }
+
   .sidebar-title {
     @apply text-xl lg:text-2xl font-bold;
   }
+
   .download-card {
     @apply bg-blue-50 border border-blue-200 rounded-lg p-4 text-center;
   }
+
   .download-card-title {
     @apply text-sm text-blue-800 font-bold mb-3;
   }
+
   .form-card {
     @apply rounded-lg border bg-gray-50 p-4 lg:p-5;
   }
+
   .form-card-title {
     @apply mb-4 text-lg font-bold border-b pb-2 text-gray-800;
   }
+
   .form-card-title-tight {
     @apply mb-3 text-lg font-bold border-b pb-2 text-gray-800;
   }
+
   .form-stack {
     @apply space-y-4;
   }
@@ -70,24 +81,31 @@ body {
   .form-label {
     @apply mb-1 block text-sm font-bold text-gray-600;
   }
+
   .form-input {
     @apply w-full rounded border p-3 text-base bg-white focus:border-blue-500 focus:outline-none;
   }
+
   .form-textarea {
     @apply h-24 w-full rounded border p-3 text-base bg-white focus:border-blue-500 focus:outline-none;
   }
+
   .edit-textarea {
     @apply w-full border rounded p-2 text-sm h-16 resize-none focus:border-blue-500 focus:outline-none;
   }
+
   .age-summary {
     @apply rounded bg-blue-100 p-3 text-center;
   }
+
   .age-summary-calendar {
     @apply text-sm text-gray-600 font-bold mb-1 block;
   }
+
   .age-summary-label {
     @apply text-sm text-gray-600 mr-2;
   }
+
   .age-summary-value {
     @apply text-2xl font-bold text-blue-800;
   }
@@ -96,12 +114,15 @@ body {
   .btn-primary {
     @apply w-full py-3 rounded text-white font-bold shadow-md transition-all bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed;
   }
+
   .btn-dark {
     @apply w-full rounded bg-gray-800 py-3 font-bold text-white hover:bg-black transition-colors;
   }
+
   .btn-close {
     @apply rounded bg-gray-200 px-3 py-1 text-sm font-semibold hover:bg-gray-300 transition-colors;
   }
+
   .btn-icon {
     @apply w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors font-bold text-lg;
   }
@@ -110,80 +131,106 @@ body {
   .empty-insurance-message {
     @apply text-sm text-gray-400 text-center py-4;
   }
+
   .insurance-list {
     @apply space-y-3;
   }
+
   .insurance-card {
     @apply p-3 bg-white border rounded shadow-sm relative cursor-move transition-all hover:border-gray-400;
   }
+
   .insurance-card-dragging {
     @apply opacity-30 border-blue-400 bg-blue-50;
   }
+
   .btn-delete-insurance {
     @apply absolute top-2 right-2 flex lg:hidden items-center justify-center w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition-colors z-10;
   }
+
   @media (min-width: 1024px) {
     .insurance-card:hover .btn-delete-insurance {
       display: flex;
     }
   }
+
   .insurance-card-header {
     @apply flex items-center gap-1.5 mb-2 pr-10 select-none;
   }
+
   .insurance-mobile-controls {
     @apply flex flex-col lg:hidden mr-1;
   }
+
   .btn-move-insurance {
     @apply text-[12px] text-gray-500 disabled:opacity-20 leading-none p-1;
   }
+
   .insurance-drag-icon {
     @apply text-sm font-bold text-gray-400 hidden lg:inline;
   }
+
   .insurance-number {
     @apply text-sm font-bold text-gray-700;
   }
+
   .insurance-company-name {
     @apply font-bold text-sm truncate max-w-[120px];
   }
+
   .insurance-type-pill {
     @apply text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 truncate;
   }
+
   .insurance-edit-grid {
     @apply grid grid-cols-2 gap-2 mt-2;
   }
+
   .insurance-edit-field {
     @apply min-w-0;
   }
+
   .insurance-edit-label {
     @apply mb-1 block text-[11px] font-bold text-gray-500;
   }
+
   .insurance-edit-control {
     @apply flex items-center rounded border bg-gray-50 px-2 focus-within:border-blue-500 focus-within:bg-white;
   }
+
   .insurance-edit-input {
     @apply min-w-0 flex-1 bg-transparent py-2 text-sm font-semibold text-gray-900 focus:outline-none;
   }
+
   .insurance-edit-unit {
     @apply shrink-0 pl-1 text-xs font-bold text-gray-500;
   }
+
   .coverage-size-panel {
     @apply mt-2 rounded border border-gray-200 bg-gray-50 p-2;
   }
+
   .coverage-size-title {
     @apply mb-1 text-[11px] font-bold text-gray-500;
   }
+
   .coverage-size-list {
     @apply flex flex-col gap-2;
   }
+
   .coverage-size-row {
-    @apply grid w-full grid-cols-[48px_minmax(0,1fr)_44px] items-center gap-2 text-xs text-gray-600;
+    @apply grid w-full items-center gap-2 text-xs text-gray-600;
+    grid-template-columns: 48px minmax(0, 1fr) 44px;
   }
+
   .coverage-size-label {
     @apply whitespace-nowrap font-bold;
   }
+
   .coverage-size-slider {
     @apply min-w-0 w-full accent-blue-600;
   }
+
   .coverage-size-input {
     @apply w-full rounded border bg-white px-1 py-1 text-right text-xs font-semibold focus:border-blue-500 focus:outline-none;
   }
@@ -192,123 +239,182 @@ body {
   .preview-shell {
     @apply flex-1 w-full lg:h-full lg:overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center;
   }
+
   .preview-toolbar {
     @apply w-full max-w-[1000px] flex justify-start items-center gap-3;
   }
+
   .btn-open-sidebar {
     @apply mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50;
   }
+
   .btn-help {
     @apply mb-4 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-blue-600 font-bold text-lg;
   }
+
   .preview-scroll {
     @apply w-full max-w-full overflow-x-auto pb-8;
   }
+
   .pdf-page {
     @apply w-[1000px] min-w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative mx-auto;
   }
+
   .pdf-header {
     @apply flex justify-between items-start mb-12;
   }
+
   .document-type {
     @apply text-xl tracking-widest font-bold mb-4;
   }
+
   .customer-heading {
     @apply text-3xl font-bold border-b-2 border-black pb-2 inline-block min-w-[300px];
   }
+
   .customer-age {
     @apply text-xl ml-2 font-normal;
   }
+
   .created-date {
     @apply text-sm mt-2;
   }
+
   .premium-summary {
-    @apply w-[300px] text-sm;
+    @apply w-[320px] shrink-0 text-sm;
   }
+
   .premium-summary-title {
     @apply border-b border-black pb-1 mb-2 font-bold;
   }
+
   .premium-summary-list {
     @apply space-y-1;
   }
+
   .premium-row {
-    @apply flex justify-between;
+    display: grid;
+    grid-template-columns: max-content minmax(14px, 1fr) max-content;
+    column-gap: 4px;
+    align-items: center;
+    line-height: 1;
   }
+
+  .premium-row-main {
+    display: contents;
+  }
+
   .premium-name {
-    @apply truncate pr-2;
+    grid-column: 1;
+    min-width: max-content;
+    white-space: nowrap;
   }
+
   .premium-amount {
-    @apply whitespace-nowrap;
+    grid-column: 3;
+    justify-self: end;
+    white-space: nowrap;
   }
+
+  .premium-row-leader {
+    grid-column: 2;
+    height: 0;
+    border-top: 1px dotted #9ca3af;
+    transform: translateY(-0.6em);
+  }
+
   .premium-total {
     @apply border-t border-black border-dashed mt-2 pt-2 flex justify-end font-bold text-xl;
   }
+
   .chart-area {
     @apply relative mt-8;
   }
+
   .chart-row {
     @apply flex h-[100px] mb-0 relative;
   }
+
   .chart-label-column {
     @apply w-[280px] shrink-0 border-b border-gray-300 flex items-center gap-3 px-2 h-[100px];
   }
+
   .chart-number {
     @apply text-base font-bold shrink-0;
   }
+
   .chart-company-block {
     @apply flex flex-col justify-center min-w-0;
   }
+
   .chart-logo {
     @apply h-7 object-contain object-left mb-1;
   }
+
   .chart-company-name {
     @apply text-base font-bold leading-tight truncate;
   }
+
   .chart-insurance-type {
     @apply text-xs text-gray-500 truncate;
   }
+
   .chart-shape-column {
     @apply flex-1 relative h-[100px];
   }
+
   .chart-shape-text {
     @apply absolute z-10 whitespace-pre pointer-events-none text-gray-800;
   }
+
   .chart-shape-text-triangle {
     @apply bottom-4 left-5;
   }
+
   .chart-shape-text-default {
     @apply top-1/2 -translate-y-1/2 left-5;
   }
+
   .chart-shape-text-line {
     @apply block whitespace-nowrap font-bold;
   }
+
   .chart-text-xs {
     @apply text-xs font-bold leading-tight;
   }
+
   .chart-text-sm {
     @apply text-sm font-bold leading-tight;
   }
+
   .chart-text-base {
     @apply text-base font-bold leading-snug;
   }
+
   .chart-text-lg {
     @apply text-lg font-bold;
   }
+
   .chart-svg {
     @apply overflow-visible block;
   }
+
   .age-axis {
     @apply flex border-t-2 border-black relative;
   }
+
   .age-axis-label-spacer {
     @apply w-[280px] shrink-0;
   }
+
   .age-axis-track {
     @apply flex-1 relative h-8 text-sm pt-1;
   }
+
   .age-axis-point {
     @apply absolute top-1 transform -translate-x-1/2;
   }
+
   .age-axis-lifetime {
     @apply absolute top-1 whitespace-nowrap;
   }
@@ -317,39 +423,51 @@ body {
   .modal-backdrop {
     @apply fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity;
   }
+
   .help-modal {
     @apply bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col;
   }
+
   .help-modal-header {
     @apply bg-gray-800 p-4 text-white flex justify-between items-center;
   }
+
   .help-modal-title {
     @apply font-bold text-lg;
   }
+
   .help-modal-close {
     @apply text-3xl leading-none hover:text-gray-300;
   }
+
   .help-modal-body {
     @apply p-6 space-y-6 text-sm overflow-y-auto max-h-[75vh];
   }
+
   .help-step {
     @apply flex gap-4;
   }
+
   .help-step-number {
     @apply w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg;
   }
+
   .help-step-title {
     @apply font-bold text-base mb-1;
   }
+
   .help-step-text {
     @apply text-gray-600 leading-relaxed;
   }
+
   .help-step-emphasis {
     @apply font-semibold;
   }
+
   .help-modal-footer {
     @apply p-4 border-t bg-gray-50;
   }
+
   .btn-modal-close {
     @apply w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold transition-all;
   }

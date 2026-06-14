@@ -85,7 +85,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
               </h1>
               <p className="created-date">{formatCreatedDate(customerInfo.createdDate)} 作成</p>
             </div>
-            <div className="premium-summary" style={{ width: 300, flex: '0 0 300px' }}>
+            <div className="premium-summary">
               <p className="premium-summary-title">保険料内訳</p>
               <div className="premium-summary-list">
                 {insurances.map((ins, index) => {
@@ -93,8 +93,11 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                   const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
                   return (
                     <div key={ins.id} className="premium-row">
-                      <span className="premium-name">{numLabel}{ins.company} {ins.insuranceType}・・・・</span>
-                      <span className="premium-amount">{ins.monthlyFee.toLocaleString()}円</span>
+                      <div className="premium-row-main">
+                        <span className="premium-name">{numLabel}{ins.company} {ins.insuranceType}</span>
+                        <span className="premium-amount">{ins.monthlyFee.toLocaleString()}円</span>
+                      </div>
+                      <div className="premium-row-leader" aria-hidden="true" />
                     </div>
                   );
                 })}
