@@ -438,7 +438,7 @@ body {
   }
 
   .chart-label-column {
-    @apply w-[280px] shrink-0 border-b border-gray-300 flex items-center gap-3 px-2 h-[100px];
+    @apply w-[230px] shrink-0 border-b border-gray-300 flex items-center gap-3 px-2 h-[100px];
   }
 
   .chart-number {
@@ -506,7 +506,7 @@ body {
   }
 
   .age-axis-label-spacer {
-    @apply w-[280px] shrink-0;
+    @apply w-[230px] shrink-0;
   }
 
   .age-axis-track {
