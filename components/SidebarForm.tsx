@@ -1,16 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Insurance, COMPANY_MASTER, INSURANCE_TYPES, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
+import { Insurance, COMPANY_MASTER, INSURANCE_TYPES, DEFAULT_COLOR } from '../constants/insurance';
 import { calculateAge, resolveReferenceAge, toJapaneseCalendar } from '../utils/helpers';
+import { getCoverageTextSizes, normalizeCoverageFontSize } from '../utils/coverage';
+import { CustomerInfo } from '../types/customer';
+import DateField, { DateFieldKey, getTodayParts } from './DateField';
+import InsuranceCard, { InsuranceNumberField } from './InsuranceCard';
 
-export type CustomerInfo = {
-  documentType: string;
-  createdDate: string;
-  customerName: string;
-  birthday: string;
-  referenceAge: string;
-};
+export type { CustomerInfo };
 
 type Props = {
   onClose: () => void;
@@ -23,70 +21,20 @@ type Props = {
 };
 
 type ShapeType = Insurance['shapeType'];
-type InsuranceNumberField = 'paymentEndAge' | 'monthlyFee';
-type DateFieldKey = 'createdDate' | 'birthday';
 
-type DateParts = {
-  year: number;
-  month: number;
-  day: number;
-};
+const formLabelClass = 'mb-1 block text-sm font-bold text-gray-600';
+const formInputClass = 'w-full rounded border bg-white p-3 text-base focus:border-blue-500 focus:outline-none';
+const formCardClass = 'rounded-lg border bg-gray-50 p-4 lg:p-5';
 
-const getCoverageLines = (text: string) => text.split('\n');
-const getDefaultCoverageFontSize = (linesCount: number) => {
-  if (linesCount <= 1) return 18;
-  if (linesCount === 2) return 16;
-  if (linesCount === 3) return 14;
-  return 12;
-};
-const getCoverageTextSizes = (text: string, sizes: number[] = []) => {
-  const lines = getCoverageLines(text);
-  const defaultSize = getDefaultCoverageFontSize(lines.length);
-  return lines.map((_, index) => sizes[index] ?? defaultSize);
-};
-const normalizeCoverageFontSize = (fontSize: number) => {
-  if (!Number.isFinite(fontSize)) return 14;
-  return Math.max(10, Math.min(fontSize, 28));
-};
-const parseDateValue = (value: string): DateParts | null => {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return null;
-  }
-
-  return { year, month, day };
-};
-const toDateValue = ({ year, month, day }: DateParts) => {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-};
-const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
-const clampDay = (year: number, month: number, day: number) => Math.min(day, getDaysInMonth(year, month));
-const getTodayParts = (): DateParts => {
-  const today = new Date();
-  return { year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() };
-};
-const formatDateLabel = (value: string) => {
-  const parts = parseDateValue(value);
-  if (!parts) return '日付を選択';
-  return `${parts.year}年${parts.month}月${parts.day}日`;
-};
-const getJapaneseYearLabel = (year: number) => {
-  const japaneseYear = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
-    era: 'long',
-    year: 'numeric',
-  }).format(new Date(year, 0, 1));
-
-  return `${year}年（${japaneseYear}）`;
-};
-
-export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, insurances, setInsurances, onDownloadPDF, isGeneratingPDF }: Props) {
+export default function SidebarForm({
+  onClose,
+  customerInfo,
+  setCustomerInfo,
+  insurances,
+  setInsurances,
+  onDownloadPDF,
+  isGeneratingPDF,
+}: Props) {
   const [company, setCompany] = useState('');
   const [insuranceType, setInsuranceType] = useState('');
   const [coverageText, setCoverageText] = useState('');
@@ -107,36 +55,34 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
     setCustomerInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePaymentEndAgeChange = (value: string) => {
-    setPaymentEndAge(value === '' ? '' : Number(value));
-  };
-  const handleMonthlyFeeChange = (value: string) => {
-    setMonthlyFee(value === '' ? '' : Number(value));
-  };
-  const handleReferenceAgeChange = (value: string) => {
-    updateCustomerInfo('referenceAge', value);
-  };
-  const normalizeReferenceAgeInput = () => {
-    const trimmedAge = customerInfo.referenceAge.trim();
-    if (!trimmedAge) return;
-
-    const selectedAge = Number(trimmedAge);
-    if (!Number.isFinite(selectedAge) || !Number.isInteger(selectedAge) || selectedAge < 0) {
-      updateCustomerInfo('referenceAge', '');
-      return;
-    }
-
-    updateCustomerInfo('referenceAge', String(selectedAge));
+  const updateDateField = (field: DateFieldKey, value: string) => {
+    updateCustomerInfo(field, value);
   };
 
   const addInsurance = () => {
     if (!company) return alert('保険会社を入力してください');
+
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
     const newInsurance: Insurance = {
-      id: Date.now(), company, insuranceType, coverageText, coverageTextSizes: getCoverageTextSizes(coverageText), paymentEndAge: paymentEndAge || 0, monthlyFee: monthlyFee || 0, shapeType, color: master.color, logo: master.logo,
+      id: Date.now(),
+      company,
+      insuranceType,
+      coverageText,
+      coverageTextSizes: getCoverageTextSizes(coverageText),
+      paymentEndAge: paymentEndAge || 0,
+      monthlyFee: monthlyFee || 0,
+      shapeType,
+      color: master.color,
+      logo: master.logo,
     };
+
     setInsurances([newInsurance, ...insurances]);
-    setCompany(''); setInsuranceType(''); setCoverageText(''); setPaymentEndAge(''); setMonthlyFee(''); setShapeType('term');
+    setCompany('');
+    setInsuranceType('');
+    setCoverageText('');
+    setPaymentEndAge('');
+    setMonthlyFee('');
+    setShapeType('term');
   };
 
   const removeInsurance = (id: number) => {
@@ -149,7 +95,11 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
   };
 
   const updateCoverageText = (id: number, text: string) => {
-    setInsurances(insurances.map(ins => ins.id === id ? { ...ins, coverageText: text, coverageTextSizes: getCoverageTextSizes(text, ins.coverageTextSizes) } : ins));
+    setInsurances(insurances.map(ins => (
+      ins.id === id
+        ? { ...ins, coverageText: text, coverageTextSizes: getCoverageTextSizes(text, ins.coverageTextSizes) }
+        : ins
+    )));
   };
 
   const updateCoverageTextSize = (id: number, lineIndex: number, fontSize: number) => {
@@ -160,10 +110,6 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
       coverageTextSizes[lineIndex] = normalizeCoverageFontSize(fontSize);
       return { ...ins, coverageTextSizes };
     }));
-  };
-
-  const getInsuranceNumberValue = (ins: Insurance, field: InsuranceNumberField) => {
-    return insuranceNumberDrafts[ins.id]?.[field] ?? String(ins[field]);
   };
 
   const updateInsuranceNumber = (id: number, field: InsuranceNumberField, value: string) => {
@@ -205,321 +151,193 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
     setInsurances(newInsurances);
   };
 
-  const handleDragStart = (index: number) => setDraggedIndex(index);
+  const normalizeReferenceAgeInput = () => {
+    const trimmedAge = customerInfo.referenceAge.trim();
+    if (!trimmedAge) return;
+
+    const selectedAge = Number(trimmedAge);
+    if (!Number.isFinite(selectedAge) || !Number.isInteger(selectedAge) || selectedAge < 0) {
+      updateCustomerInfo('referenceAge', '');
+      return;
+    }
+
+    updateCustomerInfo('referenceAge', String(selectedAge));
+  };
+
   const handleDragEnter = (index: number) => {
     if (draggedIndex === null || draggedIndex === index) return;
+
     const newInsurances = [...insurances];
     const draggedItem = newInsurances.splice(draggedIndex, 1)[0];
     newInsurances.splice(index, 0, draggedItem);
     setDraggedIndex(index);
     setInsurances(newInsurances);
   };
-  const handleDragEnd = () => setDraggedIndex(null);
-
-  const renderDateField = (
-    field: DateFieldKey,
-    label: string,
-    yearStart: number,
-    yearEnd: number,
-    placeholder: string,
-    showTodayButton = false,
-  ) => {
-    const value = customerInfo[field];
-    const selected = parseDateValue(value);
-    const fallback = selected ?? (field === 'birthday' ? { year: 1980, month: 1, day: 1 } : getTodayParts());
-    const viewYear = fallback.year;
-    const viewMonth = fallback.month;
-    const viewDay = fallback.day;
-    const years = Array.from({ length: yearEnd - yearStart + 1 }, (_, index) => yearEnd - index);
-    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-    const monthStartWeekday = new Date(viewYear, viewMonth - 1, 1).getDay();
-    const dayCells = [
-      ...Array.from({ length: monthStartWeekday }, () => null),
-      ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
-    ];
-
-    const changeDatePart = (nextParts: Partial<DateParts>) => {
-      const nextYear = nextParts.year ?? viewYear;
-      const nextMonth = nextParts.month ?? viewMonth;
-      const nextDay = clampDay(nextYear, nextMonth, nextParts.day ?? viewDay);
-      updateCustomerInfo(field, toDateValue({ year: nextYear, month: nextMonth, day: nextDay }));
-    };
-
-    return (
-      <div className="date-field">
-        <label className="form-label">{label}</label>
-        <button
-          type="button"
-          onClick={() => setOpenDatePicker(openDatePicker === field ? null : field)}
-          className={`date-trigger ${value ? '' : 'date-trigger-empty'}`}
-          aria-expanded={openDatePicker === field}
-        >
-          <span>{value ? formatDateLabel(value) : placeholder}</span>
-          <span className="date-trigger-icon">▾</span>
-        </button>
-        {openDatePicker === field && (
-          <div className="date-popover">
-            <div className="date-popover-header">
-              <select
-                value={viewYear}
-                onChange={e => changeDatePart({ year: Number(e.target.value) })}
-                className="date-select date-select-year"
-              >
-                {years.map(year => (
-                  <option key={year} value={year}>{getJapaneseYearLabel(year)}</option>
-                ))}
-              </select>
-              <select
-                value={viewMonth}
-                onChange={e => changeDatePart({ month: Number(e.target.value) })}
-                className="date-select"
-              >
-                {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
-                  <option key={month} value={month}>{month}月</option>
-                ))}
-              </select>
-            </div>
-            <div className="date-weekdays">
-              {['日', '月', '火', '水', '木', '金', '土'].map(dayName => (
-                <span key={dayName}>{dayName}</span>
-              ))}
-            </div>
-            <div className="date-grid">
-              {dayCells.map((day, index) => (
-                day === null ? (
-                  <span key={`empty-${index}`} className="date-day-empty" />
-                ) : (
-                  <button
-                    type="button"
-                    key={day}
-                    onClick={() => {
-                      changeDatePart({ day });
-                      setOpenDatePicker(null);
-                    }}
-                    className={`date-day ${selected?.year === viewYear && selected.month === viewMonth && selected.day === day ? 'date-day-selected' : ''}`}
-                  >
-                    {day}
-                  </button>
-                )
-              ))}
-            </div>
-            <div className="date-popover-actions">
-              {showTodayButton && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateCustomerInfo(field, toDateValue(getTodayParts()));
-                    setOpenDatePicker(null);
-                  }}
-                  className="date-action"
-                >
-                  今日
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => updateCustomerInfo(field, '')}
-                className="date-action date-action-muted"
-              >
-                クリア
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
-    <div className="sidebar-panel">
-      <div className="sidebar-header">
-        <h2 className="sidebar-title">設定パネル</h2>
-        <button onClick={onClose} className="btn-close">
+    <div className="w-full lg:w-[460px] lg:h-full lg:overflow-y-auto border-b lg:border-r bg-white p-4 lg:p-6 shadow-xl lg:shrink-0 z-20 relative flex flex-col gap-6">
+      <div className="flex items-center justify-between border-b pb-4">
+        <h2 className="text-xl font-bold lg:text-2xl">設定パネル</h2>
+        <button onClick={onClose} className="rounded bg-gray-200 px-3 py-1 text-sm font-semibold transition-colors hover:bg-gray-300">
           閉じる ◀
         </button>
       </div>
 
-      <div className="download-card">
-        <p className="download-card-title">資料が完成したら出力</p>
-        <button onClick={onDownloadPDF} disabled={isGeneratingPDF} className="btn-primary">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center">
+        <p className="mb-3 text-sm font-bold text-blue-800">資料が完成したら出力</p>
+        <button
+          onClick={onDownloadPDF}
+          disabled={isGeneratingPDF}
+          className="w-full rounded bg-blue-600 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
           {isGeneratingPDF ? 'PDFを生成中...' : '📥 PDFをダウンロード'}
         </button>
       </div>
 
-      <div className="form-card">
-        <h3 className="form-card-title">顧客情報</h3>
-        <div className="form-stack">
+      <div className={formCardClass}>
+        <h3 className="mb-4 border-b pb-2 text-lg font-bold text-gray-800">顧客情報</h3>
+        <div className="space-y-4">
           <div>
-            <label className="form-label">内容</label>
-            <select value={customerInfo.documentType} onChange={e => updateCustomerInfo('documentType', e.target.value)} className="form-input">
+            <label className={formLabelClass}>内容</label>
+            <select value={customerInfo.documentType} onChange={e => updateCustomerInfo('documentType', e.target.value)} className={formInputClass}>
               <option>ご契約内容</option>
               <option>ご提案内容</option>
             </select>
           </div>
-          {renderDateField('createdDate', '作成日', 1900, currentYear + 1, '作成日を選択', true)}
+
+          <DateField
+            field="createdDate"
+            label="作成日"
+            value={customerInfo.createdDate}
+            yearStart={1900}
+            yearEnd={currentYear + 1}
+            placeholder="作成日を選択"
+            isOpen={openDatePicker === 'createdDate'}
+            showTodayButton
+            onChange={updateDateField}
+            onToggle={field => setOpenDatePicker(openDatePicker === field ? null : field)}
+            onClose={() => setOpenDatePicker(null)}
+          />
+
           <div>
-            <label className="form-label">氏名</label>
-            <input type="text" placeholder="氏名" value={customerInfo.customerName} onChange={e => updateCustomerInfo('customerName', e.target.value)} className="form-input" />
+            <label className={formLabelClass}>氏名</label>
+            <input type="text" placeholder="氏名" value={customerInfo.customerName} onChange={e => updateCustomerInfo('customerName', e.target.value)} className={formInputClass} />
           </div>
-          {renderDateField('birthday', '生年月日', 1900, currentYear, '生年月日を選択')}
-          <div className="age-summary">
-            {customerInfo.birthday && <span className="age-summary-calendar">{toJapaneseCalendar(customerInfo.birthday)}</span>}
-            <div className="age-summary-row">
-              <span className="age-summary-label">現在の年齢</span>
-              <span className="age-summary-value">{currentAgeLabel} 歳</span>
+
+          <DateField
+            field="birthday"
+            label="生年月日"
+            value={customerInfo.birthday}
+            yearStart={1900}
+            yearEnd={currentYear}
+            placeholder="生年月日を選択"
+            isOpen={openDatePicker === 'birthday'}
+            onChange={updateDateField}
+            onToggle={field => setOpenDatePicker(openDatePicker === field ? null : field)}
+            onClose={() => setOpenDatePicker(null)}
+          />
+
+          <div className="rounded bg-blue-100 p-3 text-center">
+            {customerInfo.birthday && <span className="mb-1 block text-sm font-bold text-gray-600">{toJapaneseCalendar(customerInfo.birthday)}</span>}
+            <div className="flex items-baseline justify-center gap-2">
+              <span className="text-sm text-gray-600">現在の年齢</span>
+              <span className="text-2xl font-bold text-blue-800">{currentAgeLabel} 歳</span>
             </div>
-            <label className="reference-age-field">
-              <span className="reference-age-label">シミュレーション時点</span>
-              <span className="reference-age-control">
+            <label className="mt-3 flex items-center justify-between gap-3 border-t border-blue-200 pt-3 text-left">
+              <span className="text-sm font-bold text-gray-700">シミュレーション時点</span>
+              <span className="flex min-w-0 items-center gap-1">
                 <input
                   type="number"
                   min="0"
                   value={customerInfo.referenceAge}
-                  onChange={e => handleReferenceAgeChange(e.target.value)}
+                  onChange={e => updateCustomerInfo('referenceAge', e.target.value)}
                   onBlur={normalizeReferenceAgeInput}
                   placeholder={typeof currentAge === 'number' ? String(currentAge) : '年齢'}
-                  className="reference-age-input"
+                  className="w-24 rounded border border-blue-200 bg-white px-3 py-2 text-right text-base font-bold text-blue-900 focus:border-blue-500 focus:outline-none"
                 />
-                <span className="reference-age-unit">歳</span>
+                <span className="shrink-0 text-sm font-bold text-gray-700">歳</span>
               </span>
             </label>
-            <div className="reference-age-result">
+            <div className="mt-2 rounded bg-white/70 px-3 py-2 text-sm font-bold text-blue-900">
               払込開始: {referenceAgeLabel} 歳時点
             </div>
           </div>
         </div>
       </div>
 
-      <div className="form-card">
-        <h3 className="form-card-title">保険の新規追加</h3>
-        <div className="form-stack">
+      <div className={formCardClass}>
+        <h3 className="mb-4 border-b pb-2 text-lg font-bold text-gray-800">保険の新規追加</h3>
+        <div className="space-y-4">
           <div>
-            <label className="form-label">保険会社</label>
-            <input list="company-opts" value={company} onChange={e => setCompany(e.target.value)} placeholder="選択または直接入力" className="form-input" />
+            <label className={formLabelClass}>保険会社</label>
+            <input list="company-opts" value={company} onChange={e => setCompany(e.target.value)} placeholder="選択または直接入力" className={formInputClass} />
             <datalist id="company-opts">
-              {Object.keys(COMPANY_MASTER).map(n => <option key={n} value={n} />)}
+              {Object.keys(COMPANY_MASTER).map(name => <option key={name} value={name} />)}
             </datalist>
           </div>
           <div>
-            <label className="form-label">保険種類</label>
-            <input list="type-opts" value={insuranceType} onChange={e => setInsuranceType(e.target.value)} placeholder="選択または直接入力" className="form-input" />
+            <label className={formLabelClass}>保険種類</label>
+            <input list="type-opts" value={insuranceType} onChange={e => setInsuranceType(e.target.value)} placeholder="選択または直接入力" className={formInputClass} />
             <datalist id="type-opts">
-              {INSURANCE_TYPES.map(t => <option key={t} value={t} />)}
+              {INSURANCE_TYPES.map(type => <option key={type} value={type} />)}
             </datalist>
           </div>
           <div>
-            <label className="form-label">保険金額・保障内容など</label>
-            <textarea value={coverageText} onChange={e => setCoverageText(e.target.value)} placeholder="・日額5,000円&#13;&#10;・手術2.5万円" className="form-textarea" />
+            <label className={formLabelClass}>保険金額・保障内容など</label>
+            <textarea
+              value={coverageText}
+              onChange={e => setCoverageText(e.target.value)}
+              placeholder="・日額5,000円&#13;&#10;・手術2.5万円"
+              className="h-24 w-full rounded border bg-white p-3 text-base focus:border-blue-500 focus:outline-none"
+            />
           </div>
           <div>
-            <label className="form-label">払込期間 (年齢)</label>
-            <input type="number" value={paymentEndAge} onChange={e => handlePaymentEndAgeChange(e.target.value)} placeholder="65" className="form-input" />
+            <label className={formLabelClass}>払込期間 (年齢)</label>
+            <input type="number" value={paymentEndAge} onChange={e => setPaymentEndAge(e.target.value === '' ? '' : Number(e.target.value))} placeholder="65" className={formInputClass} />
           </div>
           <div>
-            <label className="form-label">月額保険料 (円)</label>
-            <input type="number" value={monthlyFee} onChange={e => handleMonthlyFeeChange(e.target.value)} placeholder="5000" className="form-input" />
+            <label className={formLabelClass}>月額保険料 (円)</label>
+            <input type="number" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
           </div>
           <div>
-            <label className="form-label">図形の種類</label>
-            <select value={shapeType} onChange={e => setShapeType(e.target.value as ShapeType)} className="form-input">
+            <label className={formLabelClass}>図形の種類</label>
+            <select value={shapeType} onChange={e => setShapeType(e.target.value as ShapeType)} className={formInputClass}>
               <option value="term">定期（四角）</option>
               <option value="triangle">収入保障（三角）</option>
               <option value="lifetime">終身（矢印）</option>
             </select>
           </div>
-          <button onClick={addInsurance} className="btn-dark">
+          <button onClick={addInsurance} className="w-full rounded bg-gray-800 py-3 font-bold text-white transition-colors hover:bg-black">
             ＋ 保険を上に追加する
           </button>
         </div>
       </div>
 
-      <div className="form-card">
-        <h3 className="form-card-title-tight">登録済みの保険 ({insurances.length})</h3>
+      <div className={formCardClass}>
+        <h3 className="mb-3 border-b pb-2 text-lg font-bold text-gray-800">登録済みの保険 ({insurances.length})</h3>
         {insurances.length === 0 ? (
-          <p className="empty-insurance-message">登録された保険はありません</p>
+          <p className="py-4 text-center text-sm text-gray-400">登録された保険はありません</p>
         ) : (
-          <div className="insurance-list">
-            {insurances.map((ins, index) => {
-              const reversedNumberIndex = insurances.length - 1 - index;
-              const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
-              const coverageLines = getCoverageLines(ins.coverageText || '');
-              const coverageTextSizes = getCoverageTextSizes(ins.coverageText, ins.coverageTextSizes);
-
-              return (
-                <div key={ins.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={e => e.preventDefault()} onDragEnter={() => handleDragEnter(index)} onDragEnd={handleDragEnd} className={`insurance-card ${draggedIndex === index ? 'insurance-card-dragging' : ''}`}>
-                  <button onClick={() => removeInsurance(ins.id)} className="btn-delete-insurance" title="削除">
-                    ×
-                  </button>
-                  <div className="insurance-card-header">
-                    <div className="insurance-mobile-controls">
-                      <button onClick={() => moveInsurance(index, 'up')} disabled={index === 0} className="btn-move-insurance">▲</button>
-                      <button onClick={() => moveInsurance(index, 'down')} disabled={index === insurances.length - 1} className="btn-move-insurance">▼</button>
-                    </div>
-                    <span className="insurance-drag-icon">☰</span>
-                    <span className="insurance-number">{numLabel}</span>
-                    <span className="insurance-company-name">{ins.company}</span>
-                    <span className="insurance-type-pill">{ins.insuranceType}</span>
-                  </div>
-                  <div>
-                    <textarea value={ins.coverageText} onChange={e => updateCoverageText(ins.id, e.target.value)} placeholder="保障内容を編集できます" className="edit-textarea" />
-                  </div>
-                  <div className="coverage-size-panel">
-                    <p className="coverage-size-title">文字サイズ</p>
-                    <div className="coverage-size-list">
-                      {coverageLines.map((_, lineIndex) => (
-                        <label key={lineIndex} className="coverage-size-row">
-                          <span className="coverage-size-label">{lineIndex + 1}行目</span>
-                          <input
-                            type="range"
-                            min="10"
-                            max="28"
-                            value={coverageTextSizes[lineIndex]}
-                            onChange={e => updateCoverageTextSize(ins.id, lineIndex, Number(e.target.value))}
-                            className="coverage-size-slider"
-                          />
-                          <input
-                            type="number"
-                            min="10"
-                            max="28"
-                            value={coverageTextSizes[lineIndex]}
-                            onChange={e => updateCoverageTextSize(ins.id, lineIndex, Number(e.target.value))}
-                            className="coverage-size-input"
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="insurance-edit-grid">
-                    <div className="insurance-edit-field">
-                      <label className="insurance-edit-label">払込期間</label>
-                      <div className="insurance-edit-control">
-                        <input
-                          type="number"
-                          value={getInsuranceNumberValue(ins, 'paymentEndAge')}
-                          onChange={e => updateInsuranceNumber(ins.id, 'paymentEndAge', e.target.value)}
-                          onBlur={() => clearInsuranceNumberDraft(ins.id, 'paymentEndAge')}
-                          className="insurance-edit-input"
-                        />
-                        <span className="insurance-edit-unit">歳</span>
-                      </div>
-                    </div>
-                    <div className="insurance-edit-field">
-                      <label className="insurance-edit-label">月額保険料</label>
-                      <div className="insurance-edit-control">
-                        <input
-                          type="number"
-                          value={getInsuranceNumberValue(ins, 'monthlyFee')}
-                          onChange={e => updateInsuranceNumber(ins.id, 'monthlyFee', e.target.value)}
-                          onBlur={() => clearInsuranceNumberDraft(ins.id, 'monthlyFee')}
-                          className="insurance-edit-input"
-                        />
-                        <span className="insurance-edit-unit">円</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-3">
+            {insurances.map((insurance, index) => (
+              <InsuranceCard
+                key={insurance.id}
+                insurance={insurance}
+                index={index}
+                totalCount={insurances.length}
+                isDragging={draggedIndex === index}
+                numberDrafts={insuranceNumberDrafts[insurance.id] ?? {}}
+                onDragStart={setDraggedIndex}
+                onDragEnter={handleDragEnter}
+                onDragEnd={() => setDraggedIndex(null)}
+                onMove={moveInsurance}
+                onRemove={removeInsurance}
+                onCoverageTextChange={updateCoverageText}
+                onCoverageTextSizeChange={updateCoverageTextSize}
+                onNumberChange={updateInsuranceNumber}
+                onNumberBlur={clearInsuranceNumberDraft}
+              />
+            ))}
           </div>
         )}
       </div>

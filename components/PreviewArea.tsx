@@ -2,14 +2,8 @@
 
 import { Insurance, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
 import { resolveReferenceAge, toJapaneseCalendar, formatCreatedDate } from '../utils/helpers';
-
-type CustomerInfo = {
-  documentType: string;
-  createdDate: string;
-  customerName: string;
-  birthday: string;
-  referenceAge: string;
-};
+import { getCoverageLines, getCoverageTextSizes } from '../utils/coverage';
+import { CustomerInfo } from '../types/customer';
 
 type Props = {
   showForm: boolean;
@@ -17,23 +11,6 @@ type Props = {
   onOpenHelp: () => void;
   customerInfo: CustomerInfo;
   insurances: Insurance[];
-};
-
-const getCoverageLines = (text: string) => text.split('\n');
-const getDefaultCoverageFontSize = (linesCount: number) => {
-  if (linesCount <= 1) return 18;
-  if (linesCount === 2) return 16;
-  if (linesCount === 3) return 14;
-  return 12;
-};
-const normalizeCoverageFontSize = (fontSize: number) => {
-  if (!Number.isFinite(fontSize)) return 14;
-  return Math.max(10, Math.min(fontSize, 28));
-};
-const getCoverageTextSizes = (text: string, sizes: number[] = []) => {
-  const lines = getCoverageLines(text);
-  const defaultSize = getDefaultCoverageFontSize(lines.length);
-  return lines.map((_, index) => normalizeCoverageFontSize(sizes[index] ?? defaultSize));
 };
 
 export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customerInfo, insurances }: Props) {
