@@ -18,7 +18,7 @@ const getTodayDateValue = () => {
 export default function Home() {
   const [customerInfo, setCustomerInfo] = useState({
     documentType: 'ご提案内容',
-    createdDate: getTodayDateValue(),
+    createdDate: '',
     customerName: '',
     birthday: '',
     referenceAge: '',
@@ -31,6 +31,13 @@ export default function Home() {
 
   useEffect(() => {
     document.title = '保険提案シミュレーター';
+    const dateInitTimer = window.setTimeout(() => {
+      setCustomerInfo(prev => (
+        prev.createdDate ? prev : { ...prev, createdDate: getTodayDateValue() }
+      ));
+    }, 0);
+
+    return () => window.clearTimeout(dateInitTimer);
   }, []);
 
   const handleDownloadPDF = () => {

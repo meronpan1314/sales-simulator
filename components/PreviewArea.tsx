@@ -21,9 +21,10 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
   const width = 600;
   const paymentAxisWidth = width - 150;
   const referenceAgeNumber = typeof referenceAge === 'number' ? referenceAge : null;
-  const maxPaymentEndAge = insurances
-    .filter(ins => ins.shapeType !== 'lifetime')
-    .reduce((maxAge, ins) => Math.max(maxAge, ins.paymentEndAge), referenceAgeNumber ?? 0);
+  const paymentEndAges = insurances
+    .filter(ins => ins.shapeType !== 'lifetime' && typeof ins.paymentEndAge === 'number')
+    .map(ins => ins.paymentEndAge);
+  const maxPaymentEndAge = paymentEndAges.reduce((maxAge, age) => Math.max(maxAge, age), referenceAgeNumber ?? 0);
 
   const ageToX = (age: number) => {
     if (referenceAgeNumber === null) return 0;
@@ -92,7 +93,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
           <div className="chart-area">
             {insurances.map((ins, index) => {
               const startX = 0;
-              const endX = ageToX(ins.paymentEndAge);
+              const endX = typeof ins.paymentEndAge === 'number' ? ageToX(ins.paymentEndAge) : 0;
               const isTriangle = ins.shapeType === 'triangle';
               const shapeH = isTriangle ? 140 : 100;
               const isDefault = ins.color === DEFAULT_COLOR;
@@ -172,7 +173,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                 <div className="age-axis-point" style={{ left: 0 }}>
                   {typeof referenceAge === 'number' ? referenceAge : '--'}歳
                 </div>
-                {Array.from(new Set(insurances.filter(ins => ins.shapeType !== 'lifetime').map(ins => ins.paymentEndAge))).map(age => (
+                {Array.from(new Set(paymentEndAges)).map(age => (
                   <div key={age} className="age-axis-point" style={{ left: ageToX(age) }}>
                     {age}歳
                   </div>

@@ -61,6 +61,16 @@ export default function SidebarForm({
 
   const addInsurance = () => {
     if (!company) return alert('保険会社を入力してください');
+    const requiresPaymentEndAge = shapeType !== 'lifetime';
+    if (requiresPaymentEndAge && (paymentEndAge === '' || !Number.isFinite(paymentEndAge) || paymentEndAge <= 0)) {
+      return alert('払込期間を入力してください');
+    }
+    if (paymentEndAge !== '' && (!Number.isFinite(paymentEndAge) || paymentEndAge <= 0)) {
+      return alert('払込期間は1以上で入力してください');
+    }
+    if (monthlyFee === '' || !Number.isFinite(monthlyFee) || monthlyFee <= 0) {
+      return alert('月額保険料を入力してください');
+    }
 
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
     const newInsurance: Insurance = {
@@ -69,8 +79,8 @@ export default function SidebarForm({
       insuranceType,
       coverageText,
       coverageTextSizes: getCoverageTextSizes(coverageText),
-      paymentEndAge: paymentEndAge || 0,
-      monthlyFee: monthlyFee || 0,
+      paymentEndAge: requiresPaymentEndAge ? paymentEndAge : paymentEndAge || '',
+      monthlyFee,
       shapeType,
       color: master.color,
       logo: master.logo,
@@ -121,7 +131,15 @@ export default function SidebarForm({
       },
     }));
 
-    if (value === '') return;
+    if (value === '') {
+      setInsurances(insurances.map(ins => (
+        ins.id === id && field === 'paymentEndAge' && ins.shapeType === 'lifetime'
+          ? { ...ins, paymentEndAge: '' }
+          : ins
+      )));
+      return;
+    }
+
     setInsurances(insurances.map(ins => ins.id === id ? { ...ins, [field]: Number(value) } : ins));
   };
 
@@ -293,11 +311,11 @@ export default function SidebarForm({
           </div>
           <div>
             <label className={formLabelClass}>払込期間 (年齢)</label>
-            <input type="number" value={paymentEndAge} onChange={e => setPaymentEndAge(e.target.value === '' ? '' : Number(e.target.value))} placeholder="65" className={formInputClass} />
+            <input type="number" min="1" value={paymentEndAge} onChange={e => setPaymentEndAge(e.target.value === '' ? '' : Number(e.target.value))} placeholder="65" className={formInputClass} />
           </div>
           <div>
             <label className={formLabelClass}>月額保険料 (円)</label>
-            <input type="number" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
+            <input type="number" min="1" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
           </div>
           <div>
             <label className={formLabelClass}>図形の種類</label>

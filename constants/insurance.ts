@@ -5,7 +5,7 @@ export type Insurance = {
   insuranceType: string;
   coverageText: string;
   coverageTextSizes?: number[];
-  paymentEndAge: number;
+  paymentEndAge: number | '';
   monthlyFee: number;
   shapeType: 'term' | 'triangle' | 'lifetime';
   color: string;
