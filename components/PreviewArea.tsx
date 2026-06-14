@@ -22,8 +22,11 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
   const paymentAxisWidth = width - 150;
   const referenceAgeNumber = typeof referenceAge === 'number' ? referenceAge : null;
   const paymentEndAges = insurances
-    .filter(ins => ins.shapeType !== 'lifetime' && typeof ins.paymentEndAge === 'number')
-    .map(ins => ins.paymentEndAge);
+    .flatMap(ins => (
+      ins.shapeType !== 'lifetime' && typeof ins.paymentEndAge === 'number'
+        ? [ins.paymentEndAge]
+        : []
+    ));
   const maxPaymentEndAge = paymentEndAges.reduce((maxAge, age) => Math.max(maxAge, age), referenceAgeNumber ?? 0);
 
   const ageToX = (age: number) => {

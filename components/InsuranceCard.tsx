@@ -120,6 +120,7 @@ export default function InsuranceCard({
           <div className={editControlClass}>
             <input
               type="number"
+              min="1"
               value={getNumberValue('paymentEndAge')}
               onChange={e => onNumberChange(insurance.id, 'paymentEndAge', e.target.value)}
               onBlur={() => onNumberBlur(insurance.id, 'paymentEndAge')}
@@ -133,6 +134,7 @@ export default function InsuranceCard({
           <div className={editControlClass}>
             <input
               type="number"
+              min="1"
               value={getNumberValue('monthlyFee')}
               onChange={e => onNumberChange(insurance.id, 'monthlyFee', e.target.value)}
               onBlur={() => onNumberBlur(insurance.id, 'monthlyFee')}

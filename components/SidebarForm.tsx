@@ -140,7 +140,10 @@ export default function SidebarForm({
       return;
     }
 
-    setInsurances(insurances.map(ins => ins.id === id ? { ...ins, [field]: Number(value) } : ins));
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue) || nextValue <= 0) return;
+
+    setInsurances(insurances.map(ins => ins.id === id ? { ...ins, [field]: nextValue } : ins));
   };
 
   const clearInsuranceNumberDraft = (id: number, field: InsuranceNumberField) => {
