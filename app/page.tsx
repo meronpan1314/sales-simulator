@@ -7,10 +7,18 @@ import HelpModal from '../components/HelpModal';
 import SidebarForm from '../components/SidebarForm';
 import PreviewArea from '../components/PreviewArea';
 
+const getTodayDateValue = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function Home() {
   const [customerInfo, setCustomerInfo] = useState({
     documentType: 'ご提案内容',
-    createdDate: '',
+    createdDate: getTodayDateValue(),
     customerName: '',
     birthday: ''
   });
@@ -22,11 +30,6 @@ export default function Home() {
 
   useEffect(() => {
     document.title = '保険提案シミュレーター';
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    setCustomerInfo(prev => ({ ...prev, createdDate: `${yyyy}-${mm}-${dd}` }));
   }, []);
 
   const handleDownloadPDF = () => {

@@ -23,6 +23,13 @@ type Props = {
 
 type ShapeType = Insurance['shapeType'];
 type InsuranceNumberField = 'paymentEndAge' | 'monthlyFee';
+type DateFieldKey = 'createdDate' | 'birthday';
+
+type DateParts = {
+  year: number;
+  month: number;
+  day: number;
+};
 
 const getCoverageLines = (text: string) => text.split('\n');
 const getDefaultCoverageFontSize = (linesCount: number) => {
@@ -40,6 +47,43 @@ const normalizeCoverageFontSize = (fontSize: number) => {
   if (!Number.isFinite(fontSize)) return 14;
   return Math.max(10, Math.min(fontSize, 28));
 };
+const parseDateValue = (value: string): DateParts | null => {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return { year, month, day };
+};
+const toDateValue = ({ year, month, day }: DateParts) => {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
+const clampDay = (year: number, month: number, day: number) => Math.min(day, getDaysInMonth(year, month));
+const getTodayParts = (): DateParts => {
+  const today = new Date();
+  return { year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() };
+};
+const formatDateLabel = (value: string) => {
+  const parts = parseDateValue(value);
+  if (!parts) return '日付を選択';
+  return `${parts.year}年${parts.month}月${parts.day}日`;
+};
+const getJapaneseYearLabel = (year: number) => {
+  const japaneseYear = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
+    era: 'long',
+    year: 'numeric',
+  }).format(new Date(year, 0, 1));
+
+  return `${year}年（${japaneseYear}）`;
+};
 
 export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, insurances, setInsurances, onDownloadPDF, isGeneratingPDF }: Props) {
   const [company, setCompany] = useState('');
@@ -50,8 +94,14 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
   const [shapeType, setShapeType] = useState<ShapeType>('term');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [insuranceNumberDrafts, setInsuranceNumberDrafts] = useState<Record<number, Partial<Record<InsuranceNumberField, string>>>>({});
+  const [openDatePicker, setOpenDatePicker] = useState<DateFieldKey | null>(null);
 
   const currentAge = calculateAge(customerInfo.birthday);
+  const currentYear = getTodayParts().year;
+
+  const updateCustomerInfo = (field: keyof CustomerInfo, value: string) => {
+    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+  };
 
   const handlePaymentEndAgeChange = (value: string) => {
     setPaymentEndAge(value === '' ? '' : Number(value));
@@ -147,6 +197,120 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
   };
   const handleDragEnd = () => setDraggedIndex(null);
 
+  const renderDateField = (
+    field: DateFieldKey,
+    label: string,
+    yearStart: number,
+    yearEnd: number,
+    placeholder: string,
+    showTodayButton = false,
+  ) => {
+    const value = customerInfo[field];
+    const selected = parseDateValue(value);
+    const fallback = selected ?? (field === 'birthday' ? { year: 1980, month: 1, day: 1 } : getTodayParts());
+    const viewYear = fallback.year;
+    const viewMonth = fallback.month;
+    const viewDay = fallback.day;
+    const years = Array.from({ length: yearEnd - yearStart + 1 }, (_, index) => yearEnd - index);
+    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
+    const monthStartWeekday = new Date(viewYear, viewMonth - 1, 1).getDay();
+    const dayCells = [
+      ...Array.from({ length: monthStartWeekday }, () => null),
+      ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+    ];
+
+    const changeDatePart = (nextParts: Partial<DateParts>) => {
+      const nextYear = nextParts.year ?? viewYear;
+      const nextMonth = nextParts.month ?? viewMonth;
+      const nextDay = clampDay(nextYear, nextMonth, nextParts.day ?? viewDay);
+      updateCustomerInfo(field, toDateValue({ year: nextYear, month: nextMonth, day: nextDay }));
+    };
+
+    return (
+      <div className="date-field">
+        <label className="form-label">{label}</label>
+        <button
+          type="button"
+          onClick={() => setOpenDatePicker(openDatePicker === field ? null : field)}
+          className={`date-trigger ${value ? '' : 'date-trigger-empty'}`}
+          aria-expanded={openDatePicker === field}
+        >
+          <span>{value ? formatDateLabel(value) : placeholder}</span>
+          <span className="date-trigger-icon">▾</span>
+        </button>
+        {openDatePicker === field && (
+          <div className="date-popover">
+            <div className="date-popover-header">
+              <select
+                value={viewYear}
+                onChange={e => changeDatePart({ year: Number(e.target.value) })}
+                className="date-select date-select-year"
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>{getJapaneseYearLabel(year)}</option>
+                ))}
+              </select>
+              <select
+                value={viewMonth}
+                onChange={e => changeDatePart({ month: Number(e.target.value) })}
+                className="date-select"
+              >
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
+                  <option key={month} value={month}>{month}月</option>
+                ))}
+              </select>
+            </div>
+            <div className="date-weekdays">
+              {['日', '月', '火', '水', '木', '金', '土'].map(dayName => (
+                <span key={dayName}>{dayName}</span>
+              ))}
+            </div>
+            <div className="date-grid">
+              {dayCells.map((day, index) => (
+                day === null ? (
+                  <span key={`empty-${index}`} className="date-day-empty" />
+                ) : (
+                  <button
+                    type="button"
+                    key={day}
+                    onClick={() => {
+                      changeDatePart({ day });
+                      setOpenDatePicker(null);
+                    }}
+                    className={`date-day ${selected?.year === viewYear && selected.month === viewMonth && selected.day === day ? 'date-day-selected' : ''}`}
+                  >
+                    {day}
+                  </button>
+                )
+              ))}
+            </div>
+            <div className="date-popover-actions">
+              {showTodayButton && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateCustomerInfo(field, toDateValue(getTodayParts()));
+                    setOpenDatePicker(null);
+                  }}
+                  className="date-action"
+                >
+                  今日
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => updateCustomerInfo(field, '')}
+                className="date-action date-action-muted"
+              >
+                クリア
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="sidebar-panel">
       <div className="sidebar-header">
@@ -168,23 +332,17 @@ export default function SidebarForm({ onClose, customerInfo, setCustomerInfo, in
         <div className="form-stack">
           <div>
             <label className="form-label">内容</label>
-            <select value={customerInfo.documentType} onChange={e => setCustomerInfo({ ...customerInfo, documentType: e.target.value })} className="form-input">
+            <select value={customerInfo.documentType} onChange={e => updateCustomerInfo('documentType', e.target.value)} className="form-input">
               <option>ご契約内容</option>
               <option>ご提案内容</option>
             </select>
           </div>
-          <div>
-            <label className="form-label">作成日</label>
-            <input type="date" value={customerInfo.createdDate} onChange={e => setCustomerInfo({ ...customerInfo, createdDate: e.target.value })} className="form-input" />
-          </div>
+          {renderDateField('createdDate', '作成日', 1900, currentYear + 1, '作成日を選択', true)}
           <div>
             <label className="form-label">氏名</label>
-            <input type="text" placeholder="氏名" value={customerInfo.customerName} onChange={e => setCustomerInfo({ ...customerInfo, customerName: e.target.value })} className="form-input" />
+            <input type="text" placeholder="氏名" value={customerInfo.customerName} onChange={e => updateCustomerInfo('customerName', e.target.value)} className="form-input" />
           </div>
-          <div>
-            <label className="form-label">生年月日</label>
-            <input type="date" value={customerInfo.birthday} onChange={e => setCustomerInfo({ ...customerInfo, birthday: e.target.value })} className="form-input" />
-          </div>
+          {renderDateField('birthday', '生年月日', 1900, currentYear, '生年月日を選択')}
           <div className="age-summary">
             {customerInfo.birthday && <span className="age-summary-calendar">{toJapaneseCalendar(customerInfo.birthday)}</span>}
             <span className="age-summary-label">現在の年齢:</span>
