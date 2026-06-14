@@ -24,3 +24,236 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .root-html {
+    @apply h-full antialiased;
+  }
+
+  .root-body {
+    @apply min-h-full flex flex-col;
+  }
+
+  .app-shell {
+    @apply flex flex-col lg:flex-row min-h-screen lg:h-screen w-screen max-w-[100vw] bg-gray-100 text-gray-900 overflow-hidden;
+  }
+
+  .preview-shell {
+    @apply flex-1 w-full lg:h-full lg:overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center;
+  }
+
+  .preview-toolbar {
+    @apply w-full max-w-[1000px] flex justify-start items-center gap-3;
+  }
+
+  .btn-open-sidebar {
+    @apply mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50;
+  }
+
+  .btn-help {
+    @apply mb-4 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-blue-600 font-bold text-lg;
+  }
+
+  .preview-scroll {
+    @apply w-full max-w-full overflow-x-auto pb-8;
+  }
+
+  .pdf-page {
+    @apply w-[1000px] min-w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative mx-auto;
+  }
+
+  .pdf-header {
+    @apply flex justify-between items-start mb-12;
+  }
+
+  .document-type {
+    @apply text-xl tracking-widest font-bold mb-4;
+  }
+
+  .customer-heading {
+    @apply text-3xl font-bold border-b-2 border-black pb-2 inline-block min-w-[300px];
+  }
+
+  .customer-age {
+    @apply text-xl ml-2 font-normal;
+  }
+
+  .created-date {
+    @apply text-sm mt-2;
+  }
+
+  .premium-summary {
+    @apply w-[320px] shrink-0 text-sm;
+  }
+
+  .premium-summary-title {
+    @apply border-b border-black pb-1 mb-2 font-bold;
+  }
+
+  .premium-summary-list {
+    @apply space-y-1;
+  }
+
+  .premium-row {
+    display: grid;
+    grid-template-columns: max-content minmax(14px, 1fr) max-content;
+    column-gap: 4px;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .premium-row-main {
+    display: contents;
+  }
+
+  .premium-name {
+    grid-column: 1;
+    min-width: max-content;
+    white-space: nowrap;
+  }
+
+  .premium-amount {
+    grid-column: 3;
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .premium-row-leader {
+    grid-column: 2;
+    height: 0;
+    border-top: 1px dotted #9ca3af;
+    transform: translateY(-0.6em);
+  }
+
+  .premium-total {
+    @apply border-t border-black border-dashed mt-2 pt-2 flex justify-end font-bold text-xl;
+  }
+
+  .chart-area {
+    @apply relative mt-8;
+  }
+
+  .chart-row {
+    @apply flex h-[100px] mb-0 relative;
+  }
+
+  .chart-label-column {
+    @apply w-[230px] shrink-0 border-b border-gray-300 flex items-center gap-3 px-2 h-[100px];
+  }
+
+  .chart-number {
+    @apply text-base font-bold shrink-0;
+  }
+
+  .chart-company-block {
+    @apply flex flex-col justify-center min-w-0;
+  }
+
+  .chart-logo {
+    @apply h-7 object-contain object-left mb-1;
+  }
+
+  .chart-company-name {
+    @apply text-base font-bold leading-tight truncate;
+  }
+
+  .chart-insurance-type {
+    @apply text-xs text-gray-500 truncate;
+  }
+
+  .chart-shape-column {
+    @apply flex-1 relative h-[100px];
+  }
+
+  .chart-shape-text {
+    @apply absolute z-10 whitespace-pre pointer-events-none text-gray-800;
+  }
+
+  .chart-shape-text-triangle {
+    @apply bottom-4 left-5;
+  }
+
+  .chart-shape-text-default {
+    @apply top-1/2 -translate-y-1/2 left-5;
+  }
+
+  .chart-shape-text-line {
+    @apply block whitespace-nowrap font-bold;
+  }
+
+  .chart-svg {
+    @apply overflow-visible block;
+  }
+
+  .age-axis {
+    @apply flex border-t-2 border-black relative;
+  }
+
+  .age-axis-label-spacer {
+    @apply w-[230px] shrink-0;
+  }
+
+  .age-axis-track {
+    @apply flex-1 relative h-8 text-sm pt-1;
+  }
+
+  .age-axis-point {
+    @apply absolute top-1 transform -translate-x-1/2;
+  }
+
+  .age-axis-lifetime {
+    @apply absolute top-1 whitespace-nowrap;
+  }
+
+  .modal-backdrop {
+    @apply fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity;
+  }
+
+  .help-modal {
+    @apply bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col;
+  }
+
+  .help-modal-header {
+    @apply bg-gray-800 p-4 text-white flex justify-between items-center;
+  }
+
+  .help-modal-title {
+    @apply font-bold text-lg;
+  }
+
+  .help-modal-close {
+    @apply text-3xl leading-none hover:text-gray-300;
+  }
+
+  .help-modal-body {
+    @apply p-6 space-y-6 text-sm overflow-y-auto max-h-[75vh];
+  }
+
+  .help-step {
+    @apply flex gap-4;
+  }
+
+  .help-step-number {
+    @apply w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0 text-lg;
+  }
+
+  .help-step-title {
+    @apply font-bold text-base mb-1;
+  }
+
+  .help-step-text {
+    @apply text-gray-600 leading-relaxed;
+  }
+
+  .help-step-emphasis {
+    @apply font-semibold;
+  }
+
+  .help-modal-footer {
+    @apply p-4 border-t bg-gray-50;
+  }
+
+  .btn-modal-close {
+    @apply w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold transition-all;
+  }
+}

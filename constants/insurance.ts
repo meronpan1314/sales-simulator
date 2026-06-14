@@ -4,7 +4,8 @@ export type Insurance = {
   company: string;
   insuranceType: string;
   coverageText: string;
-  paymentEndAge: number;
+  coverageTextSizes?: number[];
+  paymentEndAge: number | '';
   monthlyFee: number;
   shapeType: 'term' | 'triangle' | 'lifetime';
   color: string;
@@ -23,7 +24,7 @@ export const COMPANY_MASTER: Record<string, { color: string; logo: string }> = {
   'なないろ生命': { color: '#fff2cc', logo: '/images/logos/ins_icon_12.png' },
   'はなさく生命': { color: '#ea9999', logo: '/images/logos/ins_icon_13.png' },
   'ひまわり生命': { color: '#ffd966', logo: '/images/logos/ins_icon_05.png' },
-  '三井住友海上あいおい生命': { color: '#93c47d', logo: '/images/logos/ins_icon_14.png' },
+  'あいおい生命': { color: '#93c47d', logo: '/images/logos/ins_icon_14.png' },
   'ジブラルタ生命': { color: '#6d9eeb', logo: '/images/logos/ins_icon_15.png' },
   'PGF生命': { color: '#6d9eeb', logo: '/images/logos/ins_icon_09.png' },
   'エヌエヌ生命': { color: '#f1c232', logo: '/images/logos/ins_icon_11.png' },
@@ -50,5 +51,5 @@ export const INSURANCE_TYPES = [
 ];
 
 // その他の共通定数
-export const DEFAULT_COLOR = '#cfe2f3'; 
+export const DEFAULT_COLOR = '#cfe2f3';
 export const CIRCLED_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
