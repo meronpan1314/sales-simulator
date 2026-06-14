@@ -3,7 +3,6 @@
 import { Insurance, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
 import { calculateAge, toJapaneseCalendar, formatCreatedDate } from '../utils/helpers';
 
-// SidebarFormと同じ型を再定義して依存エラーを完全に防ぎます
 type CustomerInfo = {
   documentType: string;
   createdDate: string;
@@ -19,121 +18,155 @@ type Props = {
   insurances: Insurance[];
 };
 
+const getCoverageLines = (text: string) => text.split('\n');
+const getDefaultCoverageFontSize = (linesCount: number) => {
+  if (linesCount <= 1) return 18;
+  if (linesCount === 2) return 16;
+  if (linesCount === 3) return 14;
+  return 12;
+};
+const normalizeCoverageFontSize = (fontSize: number) => {
+  if (!Number.isFinite(fontSize)) return 14;
+  return Math.max(10, Math.min(fontSize, 28));
+};
+const getCoverageTextSizes = (text: string, sizes: number[] = []) => {
+  const lines = getCoverageLines(text);
+  const defaultSize = getDefaultCoverageFontSize(lines.length);
+  return lines.map((_, index) => normalizeCoverageFontSize(sizes[index] ?? defaultSize));
+};
+
 export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customerInfo, insurances }: Props) {
   const currentAge = calculateAge(customerInfo.birthday);
   const totalPrice = insurances.reduce((sum, ins) => sum + ins.monthlyFee, 0);
-  const width = 600; 
+  const width = 600;
+  const paymentAxisWidth = width - 150;
+  const currentAgeNumber = typeof currentAge === 'number' ? currentAge : null;
+  const maxPaymentEndAge = insurances
+    .filter(ins => ins.shapeType !== 'lifetime')
+    .reduce((maxAge, ins) => Math.max(maxAge, ins.paymentEndAge), currentAgeNumber ?? 0);
 
   const ageToX = (age: number) => {
-    if (!currentAge) return 0;
-    const mapped = ((age - Number(currentAge)) / (90 - Number(currentAge))) * width;
-    return Math.max(0, Math.min(mapped, width));
+    if (currentAgeNumber === null) return 0;
+    const endAge = Math.max(maxPaymentEndAge, currentAgeNumber + 1);
+    const mapped = ((age - currentAgeNumber) / (endAge - currentAgeNumber)) * paymentAxisWidth;
+    return Math.max(0, Math.min(mapped, paymentAxisWidth));
   };
 
   return (
-    <div className="flex-1 w-full lg:h-full lg:overflow-auto p-4 lg:p-10 bg-gray-200 flex flex-col items-center">
-      
+    <div className="preview-shell">
+
       {/* ボタン群 */}
-      <div className="w-full max-w-[1000px] flex justify-start items-center gap-3">
+      <div className="preview-toolbar">
         {!showForm && (
-          <button onClick={onOpenForm} className="mb-4 rounded bg-white px-4 py-2 shadow font-bold text-sm hover:bg-gray-50">
+          <button onClick={onOpenForm} className="btn-open-sidebar">
             ▶ 設定パネルを開く
           </button>
         )}
-        <button 
-          onClick={onOpenHelp} 
-          className="mb-4 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center text-gray-500 hover:text-blue-600 font-bold text-lg"
+        <button
+          onClick={onOpenHelp}
+          className="btn-help"
         >
           ?
         </button>
       </div>
 
-      <div className="w-full max-w-full overflow-x-auto pb-8">
-        <div id="pdf-export-area" className="w-[1000px] min-w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative mx-auto">
-          
+      <div className="preview-scroll">
+        <div id="pdf-export-area" className="pdf-page">
+
           {/* ヘッダー部分 */}
-          <div className="flex justify-between items-start mb-12">
+          <div className="pdf-header">
             <div>
-              <p className="text-xl tracking-widest font-bold mb-4">{customerInfo.documentType}</p>
-              <h1 className="text-3xl font-bold border-b-2 border-black pb-2 inline-block min-w-[300px]">
-                {customerInfo.customerName || '     '} 様 
-                <span className="text-xl ml-2 font-normal">
+              <p className="document-type">{customerInfo.documentType}</p>
+              <h1 className="customer-heading">
+                {customerInfo.customerName || '     '} 様
+                <span className="customer-age">
                   〈 {toJapaneseCalendar(customerInfo.birthday)}{customerInfo.birthday ? ' ' : ''}{currentAge || '〇'}歳 〉
                 </span>
               </h1>
-              <p className="text-sm mt-2">{formatCreatedDate(customerInfo.createdDate)} 作成</p>
+              <p className="created-date">{formatCreatedDate(customerInfo.createdDate)} 作成</p>
             </div>
-            <div className="w-[300px] text-sm">
-              <p className="border-b border-black pb-1 mb-2 font-bold">保険料内訳</p>
-              <div className="space-y-1">
+            <div className="premium-summary" style={{ width: 300, flex: '0 0 300px' }}>
+              <p className="premium-summary-title">保険料内訳</p>
+              <div className="premium-summary-list">
                 {insurances.map((ins, index) => {
                   const reversedNumberIndex = insurances.length - 1 - index;
                   const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
                   return (
-                    <div key={ins.id} className="flex justify-between">
-                      <span className="truncate pr-2">{numLabel}{ins.company} {ins.insuranceType}・・・・</span>
-                      <span className="whitespace-nowrap">{ins.monthlyFee.toLocaleString()}円</span>
+                    <div key={ins.id} className="premium-row">
+                      <span className="premium-name">{numLabel}{ins.company} {ins.insuranceType}・・・・</span>
+                      <span className="premium-amount">{ins.monthlyFee.toLocaleString()}円</span>
                     </div>
                   );
                 })}
               </div>
-              <div className="border-t border-black border-dashed mt-2 pt-2 flex justify-end font-bold text-xl">
+              <div className="premium-total">
                 {totalPrice.toLocaleString()}円
               </div>
             </div>
           </div>
 
           {/* 図形エリア */}
-          <div className="relative mt-8">
+          <div className="chart-area">
             {insurances.map((ins, index) => {
-              const startX = 0; 
-              const endX = ageToX(ins.paymentEndAge); 
-              const shapeH = 100;
+              const startX = 0;
+              const endX = ageToX(ins.paymentEndAge);
+              const isTriangle = ins.shapeType === 'triangle';
+              const shapeH = isTriangle ? 140 : 100;
               const isDefault = ins.color === DEFAULT_COLOR;
               const fillOpacity = isDefault ? "1" : "0.12";
               const strokeColor = isDefault ? "#a4c2f4" : ins.color;
-              
+
               const reversedNumberIndex = insurances.length - 1 - index;
               const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
 
-              const linesCount = ins.coverageText ? ins.coverageText.split('\n').length : 1;
-              let textStyleClass = 'text-xs font-bold leading-tight';
-              if (linesCount === 1) textStyleClass = 'text-lg font-bold'; 
-              else if (linesCount === 2) textStyleClass = 'text-base font-bold leading-snug';
-              else if (linesCount === 3) textStyleClass = 'text-sm font-bold leading-tight';
-              
-              const isTriangle = ins.shapeType === 'triangle';
-              const positionClass = isTriangle ? 'bottom-3 left-5' : 'top-1/2 -translate-y-1/2 left-5';
-              
-              let maxTextWidth = Math.max(80, endX - 20);
+              const positionClass = isTriangle ? 'chart-shape-text-triangle' : 'chart-shape-text-default';
+              const coverageLines = getCoverageLines(ins.coverageText || '');
+              const coverageTextSizes = getCoverageTextSizes(ins.coverageText, ins.coverageTextSizes);
+
+              let maxTextWidth: number | 'none' = Math.max(80, endX - 20);
               if (ins.shapeType === 'lifetime') {
                 maxTextWidth = width - 30;
               } else if (isTriangle) {
-                maxTextWidth = Math.max(80, endX * 0.65); 
+                maxTextWidth = 'none';
               }
 
               return (
-                <div key={ins.id} className="flex h-[100px] mb-0 relative">
-                  <div className="w-[280px] shrink-0 border-b border-gray-300 flex items-center gap-3 px-2 h-[100px]">
-                    <span className="text-base font-bold shrink-0">{numLabel}</span>
-                    <div className="flex flex-col justify-center min-w-0">
+                <div key={ins.id} className="chart-row" style={{ height: shapeH }}>
+                  <div className="chart-label-column" style={{ height: shapeH }}>
+                    <span className="chart-number">{numLabel}</span>
+                    <div className="chart-company-block">
                       {ins.logo && (
-                        <img src={ins.logo} alt={ins.company} className="h-7 object-contain object-left mb-1" />
+                        <img src={ins.logo} alt={ins.company} className="chart-logo" />
                       )}
-                      <h2 className="text-base font-bold leading-tight truncate">{ins.company}</h2>
-                      <p className="text-xs text-gray-500 truncate">{ins.insuranceType}</p>
+                      <h2 className="chart-company-name">{ins.company}</h2>
+                      <p className="chart-insurance-type">{ins.insuranceType}</p>
                     </div>
                   </div>
 
-                  <div className="flex-1 relative h-[100px]">
-                    <div 
-                      className={`absolute z-10 whitespace-pre-wrap break-all pointer-events-none text-gray-800 ${positionClass} ${textStyleClass}`} 
-                      style={{ maxWidth: maxTextWidth, textShadow: '0px 0px 4px rgba(255,255,255,0.8)' }}
+                  <div className="chart-shape-column" style={{ height: shapeH }}>
+                    <div
+                      className={`chart-shape-text ${positionClass}`}
+                      style={{
+                        maxWidth: maxTextWidth,
+                        textShadow: '0px 0px 4px rgba(255,255,255,0.8)',
+                        whiteSpace: 'pre',
+                        wordBreak: 'keep-all',
+                        overflowWrap: 'normal',
+                        ...(isTriangle ? { top: 'auto', bottom: 16, transform: 'none' } : {}),
+                      }}
                     >
-                      {ins.coverageText}
+                      {coverageLines.map((line, lineIndex) => (
+                        <span
+                          key={lineIndex}
+                          className="chart-shape-text-line"
+                          style={{ fontSize: coverageTextSizes[lineIndex], lineHeight: 1.18, whiteSpace: 'nowrap', wordBreak: 'keep-all', overflowWrap: 'normal' }}
+                        >
+                          {line || ' '}
+                        </span>
+                      ))}
                     </div>
 
-                    <svg width={width + 50} height={shapeH} className="overflow-visible block">
+                    <svg width={width + 50} height={shapeH} className="chart-svg">
                       {ins.shapeType === 'term' && (
                         <rect x={startX} y={0} width={endX} height={shapeH} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
                       )}
@@ -150,19 +183,19 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
             })}
 
             {/* 年齢軸 */}
-            <div className="flex border-t-2 border-black relative">
-              <div className="w-[280px] shrink-0" />
-              <div className="flex-1 relative h-8 text-sm pt-1">
-                <div className="absolute top-1 transform -translate-x-1/2" style={{ left: 0 }}>
+            <div className="age-axis">
+              <div className="age-axis-label-spacer" />
+              <div className="age-axis-track">
+                <div className="age-axis-point" style={{ left: 0 }}>
                   {currentAge || '--'}歳
                 </div>
                 {Array.from(new Set(insurances.filter(ins => ins.shapeType !== 'lifetime').map(ins => ins.paymentEndAge))).map(age => (
-                  <div key={age} className="absolute top-1 transform -translate-x-1/2" style={{ left: ageToX(age) }}>
+                  <div key={age} className="age-axis-point" style={{ left: ageToX(age) }}>
                     {age}歳
                   </div>
                 ))}
                 {insurances.some(ins => ins.shapeType === 'lifetime') && (
-                  <div className="absolute top-1 whitespace-nowrap" style={{ left: width + 10 }}>
+                  <div className="age-axis-lifetime" style={{ left: width + 10 }}>
                     一生涯
                   </div>
                 )}
