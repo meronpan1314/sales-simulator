@@ -1,6 +1,17 @@
 'use client';
 
-import { Insurance, DEFAULT_COLOR, CIRCLED_NUMBERS } from '../constants/insurance';
+import {
+  Insurance,
+  DEFAULT_COLOR,
+  CIRCLED_NUMBERS,
+  PREMIUM_CURRENCY_LABELS,
+  PAYMENT_FREQUENCY_TOTAL_LABELS,
+  formatPremium,
+  getPaymentFrequency,
+  getPremiumCurrency,
+  PaymentFrequency,
+  PremiumCurrency,
+} from '../constants/insurance';
 import { resolveReferenceAge, toJapaneseCalendar, formatCreatedDate } from '../utils/helpers';
 import { getCoverageLines, getCoverageTextSizes } from '../utils/coverage';
 import { CustomerInfo } from '../types/customer';
@@ -17,7 +28,20 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
   const referenceAge = resolveReferenceAge(customerInfo.birthday, customerInfo.referenceAge);
   const referenceAgeLabel = typeof referenceAge === 'number' ? referenceAge : '〇';
   const hasSelectedReferenceAge = customerInfo.referenceAge.trim() !== '';
-  const totalPrice = insurances.reduce((sum, ins) => sum + ins.monthlyFee, 0);
+  const premiumTotals = insurances.reduce<Record<PaymentFrequency, Partial<Record<PremiumCurrency, number>>>>((totals, ins) => {
+    const frequency = getPaymentFrequency(ins);
+    const currency = getPremiumCurrency(ins);
+    totals[frequency][currency] = (totals[frequency][currency] ?? 0) + ins.monthlyFee;
+    return totals;
+  }, { monthly: {}, yearly: {} });
+  const premiumTotalGroups = (['monthly', 'yearly'] as PaymentFrequency[])
+    .map(frequency => ({
+      frequency,
+      amounts: (['jpy', 'usd'] as PremiumCurrency[])
+        .map(currency => ({ currency, amount: premiumTotals[frequency][currency] }))
+        .filter((item): item is { currency: PremiumCurrency; amount: number } => item.amount !== undefined),
+    }))
+    .filter(group => group.amounts.length > 0);
   const width = 600;
   const paymentAxisWidth = width - 150;
   const referenceAgeNumber = typeof referenceAge === 'number' ? referenceAge : null;
@@ -79,7 +103,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                     <div key={ins.id} className="premium-row">
                       <div className="premium-row-main">
                         <span className="premium-name">{numLabel}{ins.company} {ins.insuranceType}</span>
-                        <span className="premium-amount">{ins.monthlyFee.toLocaleString()}円</span>
+                        <span className="premium-amount">{formatPremium(ins.monthlyFee, getPaymentFrequency(ins), getPremiumCurrency(ins))}</span>
                       </div>
                       <div className="premium-row-leader" aria-hidden="true" />
                     </div>
@@ -87,7 +111,28 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                 })}
               </div>
               <div className="premium-total">
-                {totalPrice.toLocaleString()}円
+                <span className="premium-total-heading">合計</span>
+                {premiumTotalGroups.length === 0 ? (
+                  <span className="premium-total-empty">0円</span>
+                ) : (
+                  <div className="premium-total-groups">
+                    {premiumTotalGroups.map(group => (
+                      <div
+                        key={group.frequency}
+                        className={`premium-total-group ${group.frequency === 'monthly' ? 'premium-total-group-monthly' : 'premium-total-group-yearly'}`}
+                      >
+                        <span className="premium-total-label">{PAYMENT_FREQUENCY_TOTAL_LABELS[group.frequency]}</span>
+                        <div className="premium-total-amounts">
+                          {group.amounts.map(({ currency, amount }) => (
+                            <div key={currency} className="premium-total-amount">
+                              {amount.toLocaleString()}{PREMIUM_CURRENCY_LABELS[currency]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -83,7 +83,7 @@ body {
   }
 
   .premium-summary {
-    @apply w-[320px] shrink-0 text-sm;
+    @apply w-[340px] shrink-0 text-sm;
   }
 
   .premium-summary-title {
@@ -126,7 +126,65 @@ body {
   }
 
   .premium-total {
-    @apply border-t border-black border-dashed mt-2 pt-2 flex justify-end font-bold text-xl;
+    @apply border-t border-black border-dashed mt-3 pt-2 text-gray-900;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    column-gap: 12px;
+    align-items: start;
+  }
+
+  .premium-total-heading {
+    @apply pt-1 text-left text-base font-bold leading-tight;
+  }
+
+  .premium-total-empty {
+    @apply justify-self-end text-right text-sm font-semibold;
+  }
+
+  .premium-total-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 100%;
+  }
+
+  .premium-total-group {
+    border-radius: 5px;
+    border: 1px solid #dbe3ea;
+    border-left-width: 4px;
+    padding: 6px 8px;
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    column-gap: 14px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .premium-total-group-monthly {
+    background-color: #eaf4ff;
+    border-left-color: #4f8fd1;
+  }
+
+  .premium-total-group-yearly {
+    background-color: #fff3d8;
+    border-left-color: #d39a24;
+  }
+
+  .premium-total-label {
+    @apply pt-0.5 text-left text-sm font-semibold leading-tight text-gray-700;
+  }
+
+  .premium-total-amounts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .premium-total-amount {
+    @apply text-sm font-bold leading-tight text-gray-950;
   }
 
   .chart-area {

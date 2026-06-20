@@ -7,9 +7,53 @@ export type Insurance = {
   coverageTextSizes?: number[];
   paymentEndAge: number | '';
   monthlyFee: number;
+  paymentFrequency?: PaymentFrequency;
+  currency?: PremiumCurrency;
   shapeType: 'term' | 'triangle' | 'lifetime';
   color: string;
   logo: string;
+};
+
+export type PaymentFrequency = 'monthly' | 'yearly';
+export type PremiumCurrency = 'jpy' | 'usd';
+
+export const PAYMENT_FREQUENCY_LABELS: Record<PaymentFrequency, string> = {
+  monthly: '月払',
+  yearly: '年払',
+};
+
+export const PAYMENT_FREQUENCY_TOTAL_LABELS: Record<PaymentFrequency, string> = {
+  monthly: '月払保険料',
+  yearly: '年払保険料',
+};
+
+export const PAYMENT_FREQUENCY_UNIT_LABELS: Record<PaymentFrequency, string> = {
+  monthly: '月',
+  yearly: '年',
+};
+
+export const PREMIUM_CURRENCY_LABELS: Record<PremiumCurrency, string> = {
+  jpy: '円',
+  usd: 'ドル',
+};
+
+export const DEFAULT_PAYMENT_FREQUENCY: PaymentFrequency = 'monthly';
+export const DEFAULT_PREMIUM_CURRENCY: PremiumCurrency = 'jpy';
+
+export const getPaymentFrequency = (insurance: Pick<Insurance, 'paymentFrequency'>): PaymentFrequency => {
+  return insurance.paymentFrequency ?? DEFAULT_PAYMENT_FREQUENCY;
+};
+
+export const getPremiumCurrency = (insurance: Pick<Insurance, 'currency'>): PremiumCurrency => {
+  return insurance.currency ?? DEFAULT_PREMIUM_CURRENCY;
+};
+
+export const formatPremium = (
+  amount: number,
+  frequency: PaymentFrequency,
+  currency: PremiumCurrency,
+) => {
+  return `${amount.toLocaleString()}${PREMIUM_CURRENCY_LABELS[currency]}/${PAYMENT_FREQUENCY_UNIT_LABELS[frequency]}`;
 };
 
 // 保険会社のマスタデータ

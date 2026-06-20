@@ -1,4 +1,13 @@
-import { Insurance, CIRCLED_NUMBERS } from '../constants/insurance';
+import {
+  Insurance,
+  CIRCLED_NUMBERS,
+  PAYMENT_FREQUENCY_LABELS,
+  PREMIUM_CURRENCY_LABELS,
+  PaymentFrequency,
+  PremiumCurrency,
+  getPaymentFrequency,
+  getPremiumCurrency,
+} from '../constants/insurance';
 import { getCoverageLines, getCoverageTextSizes } from '../utils/coverage';
 
 export type InsuranceNumberField = 'paymentEndAge' | 'monthlyFee';
@@ -18,6 +27,8 @@ type Props = {
   onCoverageTextSizeChange: (id: number, lineIndex: number, fontSize: number) => void;
   onNumberChange: (id: number, field: InsuranceNumberField, value: string) => void;
   onNumberBlur: (id: number, field: InsuranceNumberField) => void;
+  onPaymentFrequencyChange: (id: number, value: PaymentFrequency) => void;
+  onCurrencyChange: (id: number, value: PremiumCurrency) => void;
 };
 
 const cardBaseClass = 'p-3 rounded shadow-sm relative cursor-move transition-all hover:border-gray-400';
@@ -42,6 +53,8 @@ export default function InsuranceCard({
   onCoverageTextSizeChange,
   onNumberChange,
   onNumberBlur,
+  onPaymentFrequencyChange,
+  onCurrencyChange,
 }: Props) {
   const reversedNumberIndex = totalCount - 1 - index;
   const numLabel = CIRCLED_NUMBERS[reversedNumberIndex] || '';
@@ -130,7 +143,7 @@ export default function InsuranceCard({
           </div>
         </div>
         <div className="min-w-0">
-          <label className={editLabelClass}>月額保険料</label>
+          <label className={editLabelClass}>保険料</label>
           <div className={editControlClass}>
             <input
               type="number"
@@ -140,8 +153,34 @@ export default function InsuranceCard({
               onBlur={() => onNumberBlur(insurance.id, 'monthlyFee')}
               className={editInputClass}
             />
-            <span className="shrink-0 pl-1 text-xs font-bold text-gray-500">円</span>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="min-w-0">
+          <label className={editLabelClass}>払方</label>
+          <select
+            value={getPaymentFrequency(insurance)}
+            onChange={e => onPaymentFrequencyChange(insurance.id, e.target.value as PaymentFrequency)}
+            className="w-full rounded border bg-gray-50 px-2 py-2 text-sm font-semibold text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none"
+          >
+            {Object.entries(PAYMENT_FREQUENCY_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0">
+          <label className={editLabelClass}>通貨</label>
+          <select
+            value={getPremiumCurrency(insurance)}
+            onChange={e => onCurrencyChange(insurance.id, e.target.value as PremiumCurrency)}
+            className="w-full rounded border bg-gray-50 px-2 py-2 text-sm font-semibold text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none"
+          >
+            {Object.entries(PREMIUM_CURRENCY_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
