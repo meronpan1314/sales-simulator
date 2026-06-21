@@ -53,10 +53,29 @@ export const downloadPDF = async (elementId: string, fileName: string, setIsGene
 
   setIsGenerating(true);
   try {
+    const captureWidth = targetElement.scrollWidth;
+    const captureHeight = targetElement.scrollHeight;
     const imgData = await toPng(targetElement, {
+      width: captureWidth,
+      height: captureHeight,
+      canvasWidth: captureWidth,
+      canvasHeight: captureHeight,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
-      style: { transform: 'scale(1)', transformOrigin: 'top left' }
+      filter: node => (
+        node instanceof Element
+          ? !node.classList.contains('pdf-exclude')
+          : true
+      ),
+      style: {
+        margin: '0',
+        marginLeft: '0',
+        marginRight: '0',
+        maxWidth: 'none',
+        minWidth: `${captureWidth}px`,
+        transform: 'none',
+        transformOrigin: 'top left',
+      }
     });
 
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });

@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef, useState } from 'react';
+import type { PointerEvent } from 'react';
 import {
   Insurance,
   DEFAULT_COLOR,
@@ -24,7 +26,14 @@ type Props = {
   insurances: Insurance[];
 };
 
+const MIN_AGE_X_GAP = 32;
+const MIN_SHAPE_WIDTH = 24;
+
 export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customerInfo, insurances }: Props) {
+  const [ageXOverrides, setAgeXOverrides] = useState<Record<number, number>>({});
+  const [draggingPaymentEndAge, setDraggingPaymentEndAge] = useState<number | null>(null);
+  const draggingPaymentEndAgeRef = useRef<number | null>(null);
+  const dragSvgRef = useRef<SVGSVGElement | null>(null);
   const referenceAge = resolveReferenceAge(customerInfo.birthday, customerInfo.referenceAge);
   const referenceAgeLabel = typeof referenceAge === 'number' ? referenceAge : '〇';
   const hasSelectedReferenceAge = customerInfo.referenceAge.trim() !== '';
@@ -51,6 +60,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
         ? [ins.paymentEndAge]
         : []
     ));
+  const uniquePaymentEndAges = Array.from(new Set(paymentEndAges)).sort((a, b) => a - b);
   const maxPaymentEndAge = paymentEndAges.reduce((maxAge, age) => Math.max(maxAge, age), referenceAgeNumber ?? 0);
 
   const ageToX = (age: number) => {
@@ -58,6 +68,68 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
     const endAge = Math.max(maxPaymentEndAge, referenceAgeNumber + 1);
     const mapped = ((age - referenceAgeNumber) / (endAge - referenceAgeNumber)) * paymentAxisWidth;
     return Math.max(0, Math.min(mapped, paymentAxisWidth));
+  };
+
+  const displayAgeToX = (age: number) => {
+    return ageXOverrides[age] ?? ageToX(age);
+  };
+
+  const getShapeEndX = (insurance: Insurance) => {
+    if (typeof insurance.paymentEndAge !== 'number') return 0;
+
+    return displayAgeToX(insurance.paymentEndAge);
+  };
+
+  const getAgeXBounds = (age: number) => {
+    const ageIndex = uniquePaymentEndAges.indexOf(age);
+    const previousAge = uniquePaymentEndAges[ageIndex - 1];
+    const nextAge = uniquePaymentEndAges[ageIndex + 1];
+    const minX = previousAge === undefined
+      ? MIN_SHAPE_WIDTH
+      : displayAgeToX(previousAge) + MIN_AGE_X_GAP;
+    const maxX = nextAge === undefined
+      ? paymentAxisWidth
+      : displayAgeToX(nextAge) - MIN_AGE_X_GAP;
+
+    return minX <= maxX
+      ? { minX, maxX }
+      : { minX: displayAgeToX(age), maxX: displayAgeToX(age) };
+  };
+
+  const updateAgeXFromPointer = (clientX: number, paymentEndAge: number) => {
+    if (!dragSvgRef.current) return;
+
+    const rect = dragSvgRef.current.getBoundingClientRect();
+    const { minX, maxX } = getAgeXBounds(paymentEndAge);
+    const nextX = Math.max(minX, Math.min(clientX - rect.left, maxX));
+    setAgeXOverrides(prev => ({ ...prev, [paymentEndAge]: nextX }));
+  };
+
+  const handleResizePointerDown = (event: PointerEvent<SVGCircleElement>, insurance: Insurance) => {
+    if (typeof insurance.paymentEndAge !== 'number') return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    setDraggingPaymentEndAge(insurance.paymentEndAge);
+    draggingPaymentEndAgeRef.current = insurance.paymentEndAge;
+    dragSvgRef.current = event.currentTarget.ownerSVGElement;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    updateAgeXFromPointer(event.clientX, insurance.paymentEndAge);
+  };
+
+  const handleResizePointerMove = (event: PointerEvent<SVGCircleElement>, insurance: Insurance) => {
+    if (draggingPaymentEndAgeRef.current !== insurance.paymentEndAge || typeof insurance.paymentEndAge !== 'number') return;
+
+    updateAgeXFromPointer(event.clientX, insurance.paymentEndAge);
+  };
+
+  const handleResizePointerEnd = (event: PointerEvent<SVGCircleElement>) => {
+    setDraggingPaymentEndAge(null);
+    draggingPaymentEndAgeRef.current = null;
+    dragSvgRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   return (
@@ -141,7 +213,7 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
           <div className="chart-area">
             {insurances.map((ins, index) => {
               const startX = 0;
-              const endX = typeof ins.paymentEndAge === 'number' ? ageToX(ins.paymentEndAge) : 0;
+              const endX = getShapeEndX(ins);
               const isTriangle = ins.shapeType === 'triangle';
               const shapeH = isTriangle ? 140 : 100;
               const isDefault = ins.color === DEFAULT_COLOR;
@@ -200,10 +272,44 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
 
                     <svg width={width + 50} height={shapeH} className="chart-svg">
                       {ins.shapeType === 'term' && (
-                        <rect x={startX} y={0} width={endX} height={shapeH} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
+                        <>
+                          <rect x={startX} y={0} width={endX} height={shapeH} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
+                          {typeof ins.paymentEndAge === 'number' && (
+                            <circle
+                              cx={endX}
+                              cy={shapeH - 8}
+                              r="7"
+                              fill="transparent"
+                              opacity="0"
+                              className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
+                              onPointerDown={event => handleResizePointerDown(event, ins)}
+                              onPointerMove={event => handleResizePointerMove(event, ins)}
+                              onPointerUp={handleResizePointerEnd}
+                              onPointerCancel={handleResizePointerEnd}
+                              aria-label="払込年齢の表示位置を調整"
+                            />
+                          )}
+                        </>
                       )}
                       {ins.shapeType === 'triangle' && (
-                        <polygon points={`${startX},0 ${startX},${shapeH} ${endX},${shapeH}`} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
+                        <>
+                          <polygon points={`${startX},0 ${startX},${shapeH} ${endX},${shapeH}`} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
+                          {typeof ins.paymentEndAge === 'number' && (
+                            <circle
+                              cx={endX}
+                              cy={shapeH - 8}
+                              r="7"
+                              fill="transparent"
+                              opacity="0"
+                              className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
+                              onPointerDown={event => handleResizePointerDown(event, ins)}
+                              onPointerMove={event => handleResizePointerMove(event, ins)}
+                              onPointerUp={handleResizePointerEnd}
+                              onPointerCancel={handleResizePointerEnd}
+                              aria-label="払込年齢の表示位置を調整"
+                            />
+                          )}
+                        </>
                       )}
                       {ins.shapeType === 'lifetime' && (
                         <polygon points={`${startX},0 ${width},0 ${width + 25},${shapeH / 2} ${width},${shapeH} ${startX},${shapeH}`} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
@@ -221,8 +327,8 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                 <div className="age-axis-point" style={{ left: 0 }}>
                   {typeof referenceAge === 'number' ? referenceAge : '--'}歳
                 </div>
-                {Array.from(new Set(paymentEndAges)).map(age => (
-                  <div key={age} className="age-axis-point" style={{ left: ageToX(age) }}>
+                {uniquePaymentEndAges.map(age => (
+                  <div key={age} className="age-axis-point" style={{ left: displayAgeToX(age) }}>
                     {age}歳
                   </div>
                 ))}
