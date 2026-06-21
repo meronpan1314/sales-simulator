@@ -62,6 +62,12 @@ body {
     @apply w-[1000px] min-w-[1000px] min-h-[700px] bg-white p-12 shadow-md border border-gray-300 relative mx-auto;
   }
 
+  .pdf-page.pdf-capturing {
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+  }
+
   .pdf-header {
     @apply flex justify-between items-start mb-12;
   }
@@ -243,16 +249,31 @@ body {
     @apply overflow-visible block;
   }
 
+  .chart-resize-guide {
+    opacity: 0;
+    pointer-events: none;
+    stroke: #2563eb;
+    stroke-dasharray: 5 5;
+    stroke-linecap: round;
+    stroke-width: 2;
+    transition: opacity 120ms ease;
+  }
+
   .chart-resize-handle {
     cursor: ew-resize;
-    fill: #ffffff;
+    fill: #2563eb;
     opacity: 0;
-    stroke: #2563eb;
-    stroke-width: 2;
-    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.25));
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.28));
     pointer-events: all;
     touch-action: none;
     transition: opacity 120ms ease, fill 120ms ease, stroke 120ms ease;
+  }
+
+  .chart-row:hover .chart-resize-guide,
+  .chart-resize-guide-active {
+    opacity: 0.75;
   }
 
   .chart-row:hover .chart-resize-handle,
@@ -262,8 +283,8 @@ body {
 
   .chart-resize-handle:hover,
   .chart-resize-handle-active {
-    fill: #dbeafe;
-    stroke: #1d4ed8;
+    fill: #1d4ed8;
+    stroke: #eff6ff;
   }
 
   .age-axis {

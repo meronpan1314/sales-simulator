@@ -275,19 +275,28 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                         <>
                           <rect x={startX} y={0} width={endX} height={shapeH} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
                           {typeof ins.paymentEndAge === 'number' && (
-                            <circle
-                              cx={endX}
-                              cy={shapeH - 8}
-                              r="7"
-                              fill="transparent"
-                              opacity="0"
-                              className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
-                              onPointerDown={event => handleResizePointerDown(event, ins)}
-                              onPointerMove={event => handleResizePointerMove(event, ins)}
-                              onPointerUp={handleResizePointerEnd}
-                              onPointerCancel={handleResizePointerEnd}
-                              aria-label="払込年齢の表示位置を調整"
-                            />
+                            <>
+                              <line
+                                x1={endX}
+                                y1="8"
+                                x2={endX}
+                                y2={shapeH - 8}
+                                className={`chart-resize-guide pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-guide-active' : ''}`}
+                              />
+                              <circle
+                                cx={endX}
+                                cy={shapeH - 8}
+                                r="9"
+                                fill="transparent"
+                                opacity="0"
+                                className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
+                                onPointerDown={event => handleResizePointerDown(event, ins)}
+                                onPointerMove={event => handleResizePointerMove(event, ins)}
+                                onPointerUp={handleResizePointerEnd}
+                                onPointerCancel={handleResizePointerEnd}
+                                aria-label="払込年齢の表示位置を調整"
+                              />
+                            </>
                           )}
                         </>
                       )}
@@ -295,19 +304,28 @@ export default function PreviewArea({ showForm, onOpenForm, onOpenHelp, customer
                         <>
                           <polygon points={`${startX},0 ${startX},${shapeH} ${endX},${shapeH}`} stroke={strokeColor} strokeWidth="2" fill={ins.color} fillOpacity={fillOpacity} />
                           {typeof ins.paymentEndAge === 'number' && (
-                            <circle
-                              cx={endX}
-                              cy={shapeH - 8}
-                              r="7"
-                              fill="transparent"
-                              opacity="0"
-                              className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
-                              onPointerDown={event => handleResizePointerDown(event, ins)}
-                              onPointerMove={event => handleResizePointerMove(event, ins)}
-                              onPointerUp={handleResizePointerEnd}
-                              onPointerCancel={handleResizePointerEnd}
-                              aria-label="払込年齢の表示位置を調整"
-                            />
+                            <>
+                              <line
+                                x1={endX}
+                                y1="8"
+                                x2={endX}
+                                y2={shapeH - 8}
+                                className={`chart-resize-guide pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-guide-active' : ''}`}
+                              />
+                              <circle
+                                cx={endX}
+                                cy={shapeH - 8}
+                                r="9"
+                                fill="transparent"
+                                opacity="0"
+                                className={`chart-resize-handle pdf-exclude ${draggingPaymentEndAge === ins.paymentEndAge ? 'chart-resize-handle-active' : ''}`}
+                                onPointerDown={event => handleResizePointerDown(event, ins)}
+                                onPointerMove={event => handleResizePointerMove(event, ins)}
+                                onPointerUp={handleResizePointerEnd}
+                                onPointerCancel={handleResizePointerEnd}
+                                aria-label="払込年齢の表示位置を調整"
+                              />
+                            </>
                           )}
                         </>
                       )}
