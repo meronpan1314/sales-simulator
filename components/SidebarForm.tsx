@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Insurance, COMPANY_MASTER, INSURANCE_TYPES, DEFAULT_COLOR } from '../constants/insurance';
+import {
+  Insurance,
+  COMPANY_MASTER,
+  INSURANCE_TYPES,
+  DEFAULT_COLOR,
+  DEFAULT_PAYMENT_FREQUENCY,
+  DEFAULT_PREMIUM_CURRENCY,
+  PAYMENT_FREQUENCY_LABELS,
+  PREMIUM_CURRENCY_LABELS,
+  PaymentFrequency,
+  PremiumCurrency,
+} from '../constants/insurance';
 import { calculateAge, resolveReferenceAge, toJapaneseCalendar } from '../utils/helpers';
 import { getCoverageTextSizes, normalizeCoverageFontSize } from '../utils/coverage';
 import { CustomerInfo } from '../types/customer';
@@ -40,6 +51,8 @@ export default function SidebarForm({
   const [coverageText, setCoverageText] = useState('');
   const [paymentEndAge, setPaymentEndAge] = useState<number | ''>('');
   const [monthlyFee, setMonthlyFee] = useState<number | ''>('');
+  const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>(DEFAULT_PAYMENT_FREQUENCY);
+  const [currency, setCurrency] = useState<PremiumCurrency>(DEFAULT_PREMIUM_CURRENCY);
   const [shapeType, setShapeType] = useState<ShapeType>('term');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [insuranceNumberDrafts, setInsuranceNumberDrafts] = useState<Record<number, Partial<Record<InsuranceNumberField, string>>>>({});
@@ -69,7 +82,7 @@ export default function SidebarForm({
       return alert('払込期間は1以上で入力してください');
     }
     if (monthlyFee === '' || !Number.isFinite(monthlyFee) || monthlyFee <= 0) {
-      return alert('月額保険料を入力してください');
+      return alert('保険料を入力してください');
     }
 
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
@@ -81,6 +94,8 @@ export default function SidebarForm({
       coverageTextSizes: getCoverageTextSizes(coverageText),
       paymentEndAge: requiresPaymentEndAge ? paymentEndAge : paymentEndAge || '',
       monthlyFee,
+      paymentFrequency,
+      currency,
       shapeType,
       color: master.color,
       logo: master.logo,
@@ -92,6 +107,8 @@ export default function SidebarForm({
     setCoverageText('');
     setPaymentEndAge('');
     setMonthlyFee('');
+    setPaymentFrequency(DEFAULT_PAYMENT_FREQUENCY);
+    setCurrency(DEFAULT_PREMIUM_CURRENCY);
     setShapeType('term');
   };
 
@@ -144,6 +161,14 @@ export default function SidebarForm({
     if (!Number.isFinite(nextValue) || nextValue <= 0) return;
 
     setInsurances(insurances.map(ins => ins.id === id ? { ...ins, [field]: nextValue } : ins));
+  };
+
+  const updateInsurancePaymentFrequency = (id: number, value: PaymentFrequency) => {
+    setInsurances(insurances.map(ins => ins.id === id ? { ...ins, paymentFrequency: value } : ins));
+  };
+
+  const updateInsuranceCurrency = (id: number, value: PremiumCurrency) => {
+    setInsurances(insurances.map(ins => ins.id === id ? { ...ins, currency: value } : ins));
   };
 
   const clearInsuranceNumberDraft = (id: number, field: InsuranceNumberField) => {
@@ -230,7 +255,7 @@ export default function SidebarForm({
             field="createdDate"
             label="作成日"
             value={customerInfo.createdDate}
-            yearStart={1900}
+            yearStart={2000}
             yearEnd={currentYear + 1}
             placeholder="作成日を選択"
             isOpen={openDatePicker === 'createdDate'}
@@ -249,7 +274,7 @@ export default function SidebarForm({
             field="birthday"
             label="生年月日"
             value={customerInfo.birthday}
-            yearStart={1900}
+            yearStart={1926}
             yearEnd={currentYear}
             placeholder="生年月日を選択"
             isOpen={openDatePicker === 'birthday'}
@@ -317,8 +342,20 @@ export default function SidebarForm({
             <input type="number" min="1" value={paymentEndAge} onChange={e => setPaymentEndAge(e.target.value === '' ? '' : Number(e.target.value))} placeholder="65" className={formInputClass} />
           </div>
           <div>
-            <label className={formLabelClass}>月額保険料 (円)</label>
-            <input type="number" min="1" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
+            <label className={formLabelClass}>保険料</label>
+            <div className="grid grid-cols-[minmax(0,1fr)_96px_88px] gap-2">
+              <input type="number" min="1" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
+              <select value={paymentFrequency} onChange={e => setPaymentFrequency(e.target.value as PaymentFrequency)} className={formInputClass}>
+                {Object.entries(PAYMENT_FREQUENCY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <select value={currency} onChange={e => setCurrency(e.target.value as PremiumCurrency)} className={formInputClass}>
+                {Object.entries(PREMIUM_CURRENCY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label className={formLabelClass}>図形の種類</label>
@@ -357,6 +394,8 @@ export default function SidebarForm({
                 onCoverageTextSizeChange={updateCoverageTextSize}
                 onNumberChange={updateInsuranceNumber}
                 onNumberBlur={clearInsuranceNumberDraft}
+                onPaymentFrequencyChange={updateInsurancePaymentFrequency}
+                onCurrencyChange={updateInsuranceCurrency}
               />
             ))}
           </div>
