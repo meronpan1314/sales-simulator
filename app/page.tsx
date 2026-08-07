@@ -42,7 +42,7 @@ export default function Home() {
 
   const handleDownloadPDF = () => {
     const fileName = `${customerInfo.customerName || 'お客'}様_${customerInfo.documentType}.pdf`;
-    downloadPDF('pdf-export-area', fileName, setIsGeneratingPDF);
+    downloadPDF('pdf-export-area', fileName, setIsGeneratingPDF, insurances.length > 4);
   };
 
   return (

@@ -47,7 +47,12 @@ export const formatCreatedDate = (dateString: string) => {
 };
 
 // 4. PDF出力ロジック
-export const downloadPDF = async (elementId: string, fileName: string, setIsGenerating: (val: boolean) => void) => {
+export const downloadPDF = async (
+  elementId: string,
+  fileName: string,
+  setIsGenerating: (val: boolean) => void,
+  fitToPage = false,
+) => {
   const targetElement = document.getElementById(elementId);
   if (!targetElement) return;
 
@@ -94,8 +99,13 @@ export const downloadPDF = async (elementId: string, fileName: string, setIsGene
     const bleed = 0.4;
     const targetWidth = pdfWidth + bleed * 2;
     const targetHeight = pdfHeight + bleed * 2;
-    const imageWidth = imgRatio > pageRatio ? targetHeight * imgRatio : targetWidth;
-    const imageHeight = imgRatio > pageRatio ? targetHeight : targetWidth / imgRatio;
+    const fitScale = Math.min(pdfWidth / imgProps.width, pdfHeight / imgProps.height);
+    const imageWidth = fitToPage
+      ? imgProps.width * fitScale
+      : imgRatio > pageRatio ? targetHeight * imgRatio : targetWidth;
+    const imageHeight = fitToPage
+      ? imgProps.height * fitScale
+      : imgRatio > pageRatio ? targetHeight : targetWidth / imgRatio;
     const imageX = (pdfWidth - imageWidth) / 2;
     const imageY = (pdfHeight - imageHeight) / 2;
 
