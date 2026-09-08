@@ -81,9 +81,6 @@ export default function SidebarForm({
     if (paymentEndAge !== '' && (!Number.isFinite(paymentEndAge) || paymentEndAge <= 0)) {
       return alert('払込期間は1以上で入力してください');
     }
-    if (monthlyFee === '' || !Number.isFinite(monthlyFee) || monthlyFee <= 0) {
-      return alert('保険料を入力してください');
-    }
 
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
     const newInsurance: Insurance = {
