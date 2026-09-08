@@ -81,7 +81,8 @@ export default function SidebarForm({
     if (paymentEndAge !== '' && (!Number.isFinite(paymentEndAge) || paymentEndAge <= 0)) {
       return alert('払込期間は1以上で入力してください');
     }
-    if (monthlyFee === '' || !Number.isFinite(monthlyFee) || monthlyFee < 0) {
+    const normalizedMonthlyFee = monthlyFee === '' ? 0 : monthlyFee;
+    if (!Number.isFinite(normalizedMonthlyFee) || normalizedMonthlyFee < 0) {
       return alert('保険料は0以上で入力してください');
     }
 
@@ -93,7 +94,7 @@ export default function SidebarForm({
       coverageText,
       coverageTextSizes: getCoverageTextSizes(coverageText),
       paymentEndAge: requiresPaymentEndAge ? paymentEndAge : paymentEndAge || '',
-      monthlyFee,
+      monthlyFee: normalizedMonthlyFee,
       paymentFrequency,
       currency,
       shapeType,
