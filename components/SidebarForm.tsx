@@ -81,6 +81,9 @@ export default function SidebarForm({
     if (paymentEndAge !== '' && (!Number.isFinite(paymentEndAge) || paymentEndAge <= 0)) {
       return alert('払込期間は1以上で入力してください');
     }
+    if (monthlyFee === '' || !Number.isFinite(monthlyFee) || monthlyFee < 0) {
+      return alert('保険料は0以上で入力してください');
+    }
 
     const master = COMPANY_MASTER[company] || { color: DEFAULT_COLOR, logo: '' };
     const newInsurance: Insurance = {
@@ -155,7 +158,10 @@ export default function SidebarForm({
     }
 
     const nextValue = Number(value);
-    if (!Number.isFinite(nextValue) || nextValue <= 0) return;
+    const isInvalidValue = !Number.isFinite(nextValue)
+      || nextValue < 0
+      || (field === 'paymentEndAge' && nextValue === 0);
+    if (isInvalidValue) return;
 
     setInsurances(insurances.map(ins => ins.id === id ? { ...ins, [field]: nextValue } : ins));
   };
@@ -341,7 +347,7 @@ export default function SidebarForm({
           <div>
             <label className={formLabelClass}>保険料</label>
             <div className="grid grid-cols-[minmax(0,1fr)_96px_88px] gap-2">
-              <input type="number" min="1" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
+              <input type="number" min="0" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))} placeholder="5000" className={formInputClass} />
               <select value={paymentFrequency} onChange={e => setPaymentFrequency(e.target.value as PaymentFrequency)} className={formInputClass}>
                 {Object.entries(PAYMENT_FREQUENCY_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>

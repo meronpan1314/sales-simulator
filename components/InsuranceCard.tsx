@@ -147,7 +147,7 @@ export default function InsuranceCard({
           <div className={editControlClass}>
             <input
               type="number"
-              min="1"
+              min="0"
               value={getNumberValue('monthlyFee')}
               onChange={e => onNumberChange(insurance.id, 'monthlyFee', e.target.value)}
               onBlur={() => onNumberBlur(insurance.id, 'monthlyFee')}
